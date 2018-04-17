@@ -1,7 +1,7 @@
 // EECS 338 Final Project
 // Jakob Rubin jbr65
 // Jaafar Bennani jxb696
-// Planetary simulation
+// Planetary simulation (simplified to two dimensions)
 
 #include <stdio.h>
 #include <time.h>
@@ -10,19 +10,22 @@
 void forkSoln();
 void *threadSoln();
 struct planet updatePlanet(struct planet system[]);
+struct c polarAdd(struct c c_1, struct c c_2);
+
+// Polar struct
+struct c {
+	double deg;
+	double r;
+}
 
 
 // Planetary struct using polar coordinates
 struct planet {
 	double mass; // Intrinsic property
 
-	double deg; // Angle 
-	double r; // Radius
-	double v_deg; // Degree component of velocity
-	double v_r; // Degree component of velocity
-	double a_deg; // Degree component of acceleration
-	double a_r; // Degree component of acceleration
-
+	struct c x; // Position in polar
+	struct c v; // Velocity in polar
+	struct c a; // Acceleration in polar
 }
 
 // If "stepSize" is 1, then each step is 1 second. Scale as appropriate
@@ -61,6 +64,13 @@ int main (int argc, char *argv[]) {
 	// Do various timing comparisons to get the "interesting" data for the project TODO
 
 
+}
+
+// Add two vectors (AKA sets of polar coordinates) together.
+struct c polarAdd(struct c c_1, struct c c_2) {
+	struct c final;
+	final.r = sqrt(c_1.r^2 + c_2.r^2 + 2 * c_1.r * c_2.r * cos(c_2.deg - c_1.deg));
+	final.deg = c_1.deg + arctan(c_2.r * sin(c_2.deg - c_1.deg) / (c_1.r + c_2.r * cos(c_2.deg - c_1.deg)));
 }
 
 
