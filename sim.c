@@ -131,7 +131,7 @@ void readCSV(char filename[]) {
 	/* process the data */
 	/* the file contains 8 fields */
 	// TODO implement parsing for exponents
-	printf("Reading initialized, accessing values");
+	printf("Reading initialized, accessing values\n");
 	fflush(stdout);
 	while(fgets(buffer,BSIZE,f))
 	{
@@ -139,6 +139,8 @@ void readCSV(char filename[]) {
 		field=strtok(buffer,",");
 		/* get x position */
 		field=strtok(NULL,",");
+		prinf(field);
+		fflush(stdout);
 		solarSystem[i].p.x=atoi(field);
 		/* get y position */
 		field=strtok(NULL,",");
