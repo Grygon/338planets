@@ -60,9 +60,9 @@ int main (int argc, char *argv[]) {
 	// Add in timing monitoring TODO
 
 	// Read in starting data at given time
-	printf("Reading in data\n", );
+	printf("Reading in data\n");
 	readCSV("startData.csv");
-	printf("Finished reading data\n", );
+	printf("Finished reading data\n");
 
 	// Save state TODO (hard to copy arrays in C)
 	// struct planet startData[9] = solarSystem;
