@@ -7,6 +7,7 @@
 //		Distance: km
 //		Mass: kg
 
+#include <pthread.h>
 #include <stdio.h>
 #include <time.h>
 
