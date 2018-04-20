@@ -174,18 +174,18 @@ struct planet updatePlanet(struct planet* planets[], int active) {
 	// Unfortunately need to hardcode in 10 elements
 	for(i = 0; i < 10;i++) {
 		if(!(i==active)) {
-			struct vec dist = delta(*planets[active]->p, *planets[i]->p);
-			activePlanet.a.x += copysign(1.0,dist.x) * grav(*planets[i]->mass, dist.x); // Copysign to ensure it's the right direction
-			activePlanet.a.y += copysign(1.0,dist.y) * grav(*planets[i]->mass, dist.y); 
-			activePlanet.a.z += copysign(1.0,dist.z) * grav(*planets[i]->mass, dist.z); 
+			struct vec dist = delta(planets[active].p, planets[i].p);
+			activePlanet.a.x += copysign(1.0,dist.x) * grav(planets[i].mass, dist.x); // Copysign to ensure it's the right direction
+			activePlanet.a.y += copysign(1.0,dist.y) * grav(planets[i].mass, dist.y); 
+			activePlanet.a.z += copysign(1.0,dist.z) * grav(planets[i].mass, dist.z); 
 		}
 	}
 
 	// Update velocity
-	activePlanet.v = vecAdd(activePlanet.a, activePlanet.v);
+	activePlanet.v = vecAdd(*activePlanet.a, *activePlanet.v);
 
 	// Update positions
-	activePlanet.p = vecAdd(activePlanet.p, activePlanet.v);
+	activePlanet.p = vecAdd(*activePlanet.p, *activePlanet.v);
 
 	return activePlanet;
 }
@@ -206,9 +206,9 @@ void forkSoln() {
 void threadSoln() {
 
 	// Array for planet values (for ease of passing, it's an array)
-	double planet[10];
+	int planet[10];
 
-	int i;
+	int i;	
 	// Set start values
 	for(i = 0; i < 10;i++) {
 		 planet[i] = i;
