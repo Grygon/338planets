@@ -9,6 +9,7 @@
 
 #include <pthread.h>
 #include <stdio.h>
+#include <string.h>
 #include <math.h>
 #include <time.h>
 #include <semaphore.h> 
@@ -42,7 +43,7 @@ struct planet updatePlanet(struct planet* planets[], int active);
 struct vec vecAdd(struct vec* v_1, struct vec* v_2);
 struct vec delta(struct vec* v_1, struct vec* v_2);
 void readCSV(char filename[]);
-void updater(int planet);
+void updater(int* planet);
 double grav(double m, double r);
 
 
@@ -159,8 +160,6 @@ void readCSV(char filename[]) {
 
 	/* close file */
 	fclose(f);
-
-	return(0);
 }
 
 
@@ -225,11 +224,11 @@ void threadSoln() {
 
 
 // Takes a planet and handles updates (on the solarSystem) for it while running
-void updater(int planet) {
+void updater(int* planet) {
 	int i;
 	while(i < totalSteps) {
 		// Handle updating here to minimize conflicts where velocity/position changes halfway through reading it.
-		solarSystem[planet] = updatePlanet(solarSystem, planet);
+		solarSystem[planet] = updatePlanet(*solarSystem, planet);
 	}
 
 }
