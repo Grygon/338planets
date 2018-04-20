@@ -43,7 +43,7 @@ struct planet updatePlanet(struct planet* planets[], int active);
 struct vec vecAdd(struct vec* v_1, struct vec* v_2);
 struct vec delta(struct vec* v_1, struct vec* v_2);
 void readCSV(char filename[]);
-void updater(int* planet);
+void *updater(int* planet);
 double grav(double m, double r);
 
 
