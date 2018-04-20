@@ -9,7 +9,11 @@
 
 #include <pthread.h>
 #include <stdio.h>
+#include <math.h>
 #include <time.h>
+#include <semaphore.h> 
+#include <sys/time.h>
+#include <stdlib.h>
 
 // Total number of steps to perform
 int totalSteps = 1000;
