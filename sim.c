@@ -10,7 +10,8 @@
 #include <stdio.h>
 #include <time.h>
 
-
+// Total number of steps to perform
+int totalSteps = 1000;
 
 // Create pointers to functions
 void forkSoln();
@@ -18,6 +19,7 @@ void *threadSoln();
 struct planet updatePlanet(struct planet planetSystem[]);
 struct vec vecAdd(struct vec v_1, struct vec v_2);
 void readCSV(struct planet planetSystem[]);
+void updater(int planet);
 
 // Vector struct
 struct vec {
@@ -55,7 +57,7 @@ int main (int argc, char *argv[]) {
 	// Run one solution at a time to compare
 
 	// Fork based solution
-	forkSoln();
+	// forkSoln();
 
 	// Reset global storage of solarSystem
 	solarSystem = startData;
@@ -169,14 +171,10 @@ struct planet updatePlanet(struct planet planets[], int active) {
 	}
 
 	// Update velocity
-	activePlanet->v->x += activePlanet->a->x;
-	activePlanet->v->y += activePlanet->a->y;
-	activePlanet->v->z += activePlanet->a->z;
+	vecAdd(activePlanet->a, activePlanet->v);
 
 	// Update positions
-	activePlanet->p->x += activePlanet->v->x;
-	activePlanet->p->y += activePlanet->v->y;
-	activePlanet->p->z += activePlanet->v->z;
+	vecAdd(activePlanet->p, activePlanet->v);
 
 	return activePlanet;
 }
@@ -195,5 +193,31 @@ void forkSoln() {
 
 // Solution using POSIX threads
 void threadSoln() {
+
+	// Array for planet values (for ease of passing, it's an array)
+	double planet[10];
+
+	// Set start values
+	for(i = 0; i < 10;i++) {
+		 planet[i] = i;
+	}
+
+	// Prepare the child threads
+	pthread_t tid[10]; /* the thread identifiers */
+	for(i = 0; i < 10;i++) {
+		pthread_create(&tid[i], NULL, updater, &planet[i]);
+	}
+
+
+}
+
+
+// Takes a planet and handles updates (on the solarSystem) for it while running
+void updater(int planet) {
+	int i;
+	while(i < totalSteps) {
+		// Handle updating here to minimize conflicts where velocity/position changes halfway through reading it.
+		solarSystem[planet] = updatePlanet(solarSystem, planet);
+	}
 
 }
