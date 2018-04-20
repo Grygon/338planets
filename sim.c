@@ -60,7 +60,9 @@ int main (int argc, char *argv[]) {
 	// Add in timing monitoring TODO
 
 	// Read in starting data at given time
+	printf("Reading in data\n", );
 	readCSV("startData.csv");
+	printf("Finished reading data\n", );
 
 	// Save state TODO (hard to copy arrays in C)
 	// struct planet startData[9] = solarSystem;
@@ -216,6 +218,7 @@ void threadSoln() {
 	// Prepare the child threads
 	pthread_t tid[10]; /* the thread identifiers */
 	for(i = 0; i < 9;i++) {
+		printf("Starting planet %d\n", i);
 		pthread_create(&tid[i], NULL, updater, &planet[i]);
 	}	
 
