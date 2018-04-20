@@ -38,7 +38,7 @@ int totalSteps = 1000;
 // Create pointers to functions
 void forkSoln();
 void *threadSoln();
-struct planet updatePlanet(struct planet planetSystem[]);
+struct planet updatePlanet(struct planet* planets[], int active);
 struct vec vecAdd(struct vec* v_1, struct vec* v_2);
 struct vec delta(struct vec* v_1, struct vec* v_2);
 void readCSV(char filename[]);
@@ -87,9 +87,9 @@ int main (int argc, char *argv[]) {
 // Add two vectors (AKA sets of polar coordinates) together.
 struct vec vecAdd(struct vec* v_1, struct vec* v_2) {
 	struct vec sum;
-	sum.x = *v_1->x + *v_2->x;
-	sum.y = *v_1->y + *v_2->y;
-	sum.z = *v_1->z + *v_2->z;
+	sum.x = v_1->x + v_2->x;
+	sum.y = v_1->y + v_2->y;
+	sum.z = v_1->z + v_2->z;
 
 	return sum;
 }
@@ -97,9 +97,9 @@ struct vec vecAdd(struct vec* v_1, struct vec* v_2) {
 // Difference between two vectors
 struct vec delta(struct vec* v_1, struct vec* v_2) {
 	struct vec diff;
-	diff.x = *v_1->x - *v_2->x;
-	diff.y = *v_1->y - *v_2->y;
-	diff.z = *v_1->z - *v_2->z;
+	diff.x = v_1->x - v_2->x;
+	diff.y = v_1->y - v_2->y;
+	diff.z = v_1->z - v_2->z;
 
 	return diff;
 }
@@ -133,25 +133,25 @@ void readCSV(char filename[]) {
 		field=strtok(buffer,",");
 		/* get x position */
 		field=strtok(NULL,",");
-		*solarSystem[i].p.x=atoi(field);
+		solarSystem[i].p.x=atoi(field);
 		/* get y position */
 		field=strtok(NULL,",");
-		*solarSystem[i].p.y=atoi(field);
+		solarSystem[i].p.y=atoi(field);
 		/* get z position */
 		field=strtok(NULL,",");
-		*solarSystem[i].p.z=atoi(field);
+		solarSystem[i].p.z=atoi(field);
 		/* get x vel */
 		field=strtok(NULL,",");
-		*solarSystem[i].v.x=atoi(field);
+		solarSystem[i].v.x=atoi(field);
 		/* get y vel */
 		field=strtok(NULL,",");
-		*solarSystem[i].v.y=atoi(field);
+		solarSystem[i].v.y=atoi(field);
 		/* get z vel */
 		field=strtok(NULL,",");
-		*solarSystem[i].v.z=atoi(field);
+		solarSystem[i].v.z=atoi(field);
 		/* get mass */
 		field=strtok(NULL,",");
-		*solarSystem[i].mass=atoi(field);
+		solarSystem[i].mass=atoi(field);
 
 		i++;
 	}
@@ -173,18 +173,18 @@ struct planet updatePlanet(struct planet* planets[], int active) {
 	// Unfortunately need to hardcode in 10 elements
 	for(i = 0; i < 10;i++) {
 		if(!(i==active)) {
-			dist = delta(planets[active]->p, planets[i]->p);
-			activePlanet.a.x += copysign(1.0,dist->x) * grav(planets[i]->mass, dist->x); // Copysign to ensure it's the right direction
-			activePlanet.a.y += copysign(1.0,dist->y) * grav(planets[i]->mass, dist->y); 
-			activePlanet.a.z += copysign(1.0,dist->z) * grav(planets[i]->mass, dist->z); 
+			struct vec dist = delta(*planets[active]->p, *planets[i]->p);
+			activePlanet.a.x += copysign(1.0,dist.x) * grav(*planets[i]->mass, dist.x); // Copysign to ensure it's the right direction
+			activePlanet.a.y += copysign(1.0,dist.y) * grav(*planets[i]->mass, dist.y); 
+			activePlanet.a.z += copysign(1.0,dist.z) * grav(*planets[i]->mass, dist.z); 
 		}
 	}
 
 	// Update velocity
-	activePlanet.v = vecAdd(activePlanet->a, activePlanet->v);
+	activePlanet.v = vecAdd(activePlanet.a, activePlanet.v);
 
 	// Update positions
-	activePlanet.p = vecAdd(activePlanet->p, activePlanet->v);
+	activePlanet.p = vecAdd(activePlanet.p, activePlanet.v);
 
 	return activePlanet;
 }
