@@ -197,7 +197,7 @@ struct planet updatePlanet(struct planet* planets[], int active) {
 	int i;
 	struct planet activePlanet;
 	// Unfortunately need to hardcode in 10 elements
-	for(i = 0; i < 9;i++) {
+	for(i = 0; i <= 9;i++) {
 		if(!(i==active)) {
 			struct vec dist = delta(&(planets[active]->p), &(planets[i]->p));
 			activePlanet.a.x += copysign(1.0,dist.x) * grav(planets[i]->mass, dist.x); // Copysign to ensure it's the right direction
@@ -231,17 +231,17 @@ void forkSoln() {
 void threadSoln() {
 
 	// Array for planet values (for ease of passing, it's an array)
-	int planet[9];
+	int planet[10];
 
 	int i;	
 	// Set start values
-	for(i = 0; i < 9;i++) {
+	for(i = 0; i <= 9;i++) {
 		 planet[i] = i;
 	}
 
 	// Prepare the child threads
 	pthread_t tid[10]; /* the thread identifiers */
-	for(i = 0; i < 9;i++) {
+	for(i = 0; i <= 9;i++) {
 		printf("Starting planet %d\n", i);
 		pthread_create(&tid[i], NULL, updater, &planet[i]);
 	}	
