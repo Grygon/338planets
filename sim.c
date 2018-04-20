@@ -10,6 +10,8 @@
 #include <stdio.h>
 #include <time.h>
 
+
+
 // Create pointers to functions
 void forkSoln();
 void *threadSoln();
@@ -112,6 +114,7 @@ void readCSV(char filename[]) {
 
 	/* process the data */
 	/* the file contains 8 fields */
+	// TODO implement parsing for exponents
 	while(fgets(buffer,BSIZE,f))
 	{
 		/* skip name */
@@ -152,10 +155,37 @@ void readCSV(char filename[]) {
 // Updates the properties of the "active" planet using the rest of the 1
 // System is passed in as an array of planets, the active planet is determined based on its index in that array
 // NOTE: Synchronization does not happen here. The system may occasionally be out-of-sync, but this function doesn't care
-struct planet updatePlanet(struct planet [], int active) { 
+struct planet updatePlanet(struct planet planets[], int active) { 
+	int i;
+	struct planet activePlanet;
+	// Unfortunately need to hardcode in 10 elements
+	for(i = 0; i < 10;i++) {
+		if(!(i==active)) {
+			dist = delta(planets[active]->p, planets[i]->p);
+			activePlanet->a->x += copysign(1.0,dist->x) * grav(planets[i]->mass, dist->x); // Copysign to ensure it's the right direction
+			activePlanet->a->y += copysign(1.0,dist->y) * grav(planets[i]->mass, dist->y); 
+			activePlanet->a->z += copysign(1.0,dist->z) * grav(planets[i]->mass, dist->z); 
+		}
+	}
 
+	// Update velocity
+	activePlanet->v->x += activePlanet->a->x;
+	activePlanet->v->y += activePlanet->a->y;
+	activePlanet->v->z += activePlanet->a->z;
+
+	// Update positions
+	activePlanet->p->x += activePlanet->v->x;
+	activePlanet->p->y += activePlanet->v->y;
+	activePlanet->p->z += activePlanet->v->z;
+
+	return activePlanet;
 }
 
+// Calculates the acceleration due to an object of mass m at distance r
+// Returns in km/s
+double grav(double m, double r) {
+	return 6.674 * pow(10, -20) * m / (r * r);
+}
 
 // Solution using fork
 void forkSoln() {
