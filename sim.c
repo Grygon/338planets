@@ -61,8 +61,8 @@ int main (int argc, char *argv[]) {
 	// Read in starting data at given time
 	readCSV("startData.csv");
 
-	// Save state
-	struct planet startData[9] = solarSystem;
+	// Save state TODO (hard to copy arrays in C)
+	// struct planet startData[9] = solarSystem;
 
 
 	// Run one solution at a time to compare
@@ -70,8 +70,8 @@ int main (int argc, char *argv[]) {
 	// Fork based solution
 	// forkSoln();
 
-	// Reset global storage of solarSystem
-	solarSystem = startData;
+	// Reset global storage of solarSystem TODO see above
+	// solarSystem = startData;
 
 	// Thread based solution
 	threadSoln();
@@ -174,7 +174,7 @@ struct planet updatePlanet(struct planet* planets[], int active) {
 	// Unfortunately need to hardcode in 10 elements
 	for(i = 0; i < 10;i++) {
 		if(!(i==active)) {
-			struct vec dist = delta(planets[active]->p, planets[i]->p);
+			struct vec dist = delta(&(planets[active]->p), &(planets[i]->p);
 			activePlanet.a.x += copysign(1.0,dist.x) * grav(planets[i]->mass, dist.x); // Copysign to ensure it's the right direction
 			activePlanet.a.y += copysign(1.0,dist.y) * grav(planets[i]->mass, dist.y); 
 			activePlanet.a.z += copysign(1.0,dist.z) * grav(planets[i]->mass, dist.z); 
@@ -182,10 +182,10 @@ struct planet updatePlanet(struct planet* planets[], int active) {
 	}
 
 	// Update velocity
-	activePlanet.v = vecAdd(*activePlanet.a, *activePlanet.v);
+	activePlanet.v = vecAdd(&(activePlanet.a), &(activePlanet.v));
 
 	// Update positions
-	activePlanet.p = vecAdd(*activePlanet.p, *activePlanet.v);
+	activePlanet.p = vecAdd(&(activePlanet.p), &(activePlanet.v));
 
 	return activePlanet;
 }
