@@ -7,24 +7,21 @@
 //		Distance: km
 //		Mass: kg
 
+#include <pthread.h>
 #include <stdio.h>
+#include <string.h>
+#include <math.h>
 #include <time.h>
-
-
-
-// Create pointers to functions
-void forkSoln();
-void *threadSoln();
-struct planet updatePlanet(struct planet planetSystem[]);
-struct vec vecAdd(struct vec v_1, struct vec v_2);
-void readCSV(struct planet planetSystem[]);
+#include <semaphore.h> 
+#include <sys/time.h>
+#include <stdlib.h>
 
 // Vector struct
 struct vec {
 	double x;
 	double y;
 	double z;
-}
+};
 
 
 // Planetary struct using vectors 
@@ -34,7 +31,21 @@ struct planet {
 	struct vec p; // Position in vector
 	struct vec v; // Velocity in vector
 	struct vec a; // Acceleration in vector
-}
+};
+
+// Total number of steps to perform
+int totalSteps = 1000;
+
+// Create pointers to functions
+void forkSoln();
+void threadSoln();
+struct planet updatePlanet(struct planet* planets[], int active);
+struct vec vecAdd(struct vec* v_1, struct vec* v_2);
+struct vec delta(struct vec* v_1, struct vec* v_2);
+void readCSV(char filename[]);
+void *updater(int* planet);
+double grav(double m, double r);
+
 
 // If "stepSize" is 1, then each step is 1 second. Scale as appropriate
 int stepSize = 60;
@@ -51,14 +62,17 @@ int main (int argc, char *argv[]) {
 	// Read in starting data at given time
 	readCSV("startData.csv");
 
+	// Save state TODO (hard to copy arrays in C)
+	// struct planet startData[9] = solarSystem;
+
 
 	// Run one solution at a time to compare
 
 	// Fork based solution
-	forkSoln();
+	// forkSoln();
 
-	// Reset global storage of solarSystem
-	solarSystem = startData;
+	// Reset global storage of solarSystem TODO see above
+	// solarSystem = startData;
 
 	// Thread based solution
 	threadSoln();
@@ -73,23 +87,23 @@ int main (int argc, char *argv[]) {
 }
 
 // Add two vectors (AKA sets of polar coordinates) together.
-struct vec vecAdd(struct vec v_1, struct vec v_2) {
+struct vec vecAdd(struct vec* v_1, struct vec* v_2) {
 	struct vec sum;
-	sum.x = v_1.x + v_2.x;
-	sum.y = v_1.y + v_2.y;
-	sum.z = v_1.z + v_2.z;
+	sum.x = v_1->x + v_2->x;
+	sum.y = v_1->y + v_2->y;
+	sum.z = v_1->z + v_2->z;
 
 	return sum;
 }
 
 // Difference between two vectors
-struct vec delta(struct vec v_1, struct vec v_2) {
+struct vec delta(struct vec* v_1, struct vec* v_2) {
 	struct vec diff;
-	sum.x = v_1.x - v_2.x;
-	sum.y = v_1.y - v_2.y;
-	sum.z = v_1.z - v_2.z;
+	diff.x = v_1->x - v_2->x;
+	diff.y = v_1->y - v_2->y;
+	diff.z = v_1->z - v_2->z;
 
-	return sum;
+	return diff;
 }
 
 
@@ -121,33 +135,31 @@ void readCSV(char filename[]) {
 		field=strtok(buffer,",");
 		/* get x position */
 		field=strtok(NULL,",");
-		solarSystem[i]->p->x=atoi(field);
+		solarSystem[i].p.x=atoi(field);
 		/* get y position */
 		field=strtok(NULL,",");
-		solarSystem[i]->p->y=atoi(field);
+		solarSystem[i].p.y=atoi(field);
 		/* get z position */
 		field=strtok(NULL,",");
-		solarSystem[i]->p->z=atoi(field);
+		solarSystem[i].p.z=atoi(field);
 		/* get x vel */
 		field=strtok(NULL,",");
-		solarSystem[i]->v->x=atoi(field);
+		solarSystem[i].v.x=atoi(field);
 		/* get y vel */
 		field=strtok(NULL,",");
-		solarSystem[i]->v->y=atoi(field);
+		solarSystem[i].v.y=atoi(field);
 		/* get z vel */
 		field=strtok(NULL,",");
-		solarSystem[i]->v->z=atoi(field);
+		solarSystem[i].v.z=atoi(field);
 		/* get mass */
 		field=strtok(NULL,",");
-		solarSystem[i]->mass=atoi(field);
+		solarSystem[i].mass=atoi(field);
 
 		i++;
 	}
 
 	/* close file */
 	fclose(f);
-
-	return(0);
 }
 
 
@@ -155,28 +167,24 @@ void readCSV(char filename[]) {
 // Updates the properties of the "active" planet using the rest of the 1
 // System is passed in as an array of planets, the active planet is determined based on its index in that array
 // NOTE: Synchronization does not happen here. The system may occasionally be out-of-sync, but this function doesn't care
-struct planet updatePlanet(struct planet planets[], int active) { 
+struct planet updatePlanet(struct planet* planets[], int active) { 
 	int i;
 	struct planet activePlanet;
 	// Unfortunately need to hardcode in 10 elements
-	for(i = 0; i < 10;i++) {
+	for(i = 0; i < 9;i++) {
 		if(!(i==active)) {
-			dist = delta(planets[active]->p, planets[i]->p);
-			activePlanet->a->x += copysign(1.0,dist->x) * grav(planets[i]->mass, dist->x); // Copysign to ensure it's the right direction
-			activePlanet->a->y += copysign(1.0,dist->y) * grav(planets[i]->mass, dist->y); 
-			activePlanet->a->z += copysign(1.0,dist->z) * grav(planets[i]->mass, dist->z); 
+			struct vec dist = delta(&(planets[active]->p), &(planets[i]->p));
+			activePlanet.a.x += copysign(1.0,dist.x) * grav(planets[i]->mass, dist.x); // Copysign to ensure it's the right direction
+			activePlanet.a.y += copysign(1.0,dist.y) * grav(planets[i]->mass, dist.y); 
+			activePlanet.a.z += copysign(1.0,dist.z) * grav(planets[i]->mass, dist.z); 
 		}
 	}
 
 	// Update velocity
-	activePlanet->v->x += activePlanet->a->x;
-	activePlanet->v->y += activePlanet->a->y;
-	activePlanet->v->z += activePlanet->a->z;
+	activePlanet.v = vecAdd(&(activePlanet.a), &(activePlanet.v));
 
 	// Update positions
-	activePlanet->p->x += activePlanet->v->x;
-	activePlanet->p->y += activePlanet->v->y;
-	activePlanet->p->z += activePlanet->v->z;
+	activePlanet.p = vecAdd(&(activePlanet.p), &(activePlanet.v));
 
 	return activePlanet;
 }
@@ -196,4 +204,31 @@ void forkSoln() {
 // Solution using POSIX threads
 void threadSoln() {
 
+	// Array for planet values (for ease of passing, it's an array)
+	int planet[9];
+
+	int i;	
+	// Set start values
+	for(i = 0; i < 9;i++) {
+		 planet[i] = i;
+	}
+
+	// Prepare the child threads
+	pthread_t tid[10]; /* the thread identifiers */
+	for(i = 0; i < 9;i++) {
+		pthread_create(&tid[i], NULL, updater, &planet[i]);
+	}	
+
+
+}
+
+
+// Takes a planet and handles updates (on the solarSystem) for it while running
+void *updater(int* planet) {
+	int i;
+	while(i < totalSteps) {
+		// Handle updating here to minimize conflicts where velocity/position changes halfway through reading it.
+		solarSystem[*planet] = updatePlanet(&solarSystem, *planet);
+		i++;
+	}
 }
