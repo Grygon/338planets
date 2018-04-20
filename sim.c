@@ -228,7 +228,7 @@ void updater(int* planet) {
 	int i;
 	while(i < totalSteps) {
 		// Handle updating here to minimize conflicts where velocity/position changes halfway through reading it.
-		solarSystem[*planet] = updatePlanet(&&solarSystem, *planet);
+		solarSystem[*planet] = updatePlanet(&solarSystem, *planet);
 		i++;
 	}
 }
