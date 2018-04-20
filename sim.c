@@ -132,6 +132,7 @@ void readCSV(char filename[]) {
 	/* the file contains 8 fields */
 	// TODO implement parsing for exponents
 	printf("Reading initialized, accessing values");
+	fflush(stdout);
 	while(fgets(buffer,BSIZE,f))
 	{
 		/* skip name */
@@ -161,6 +162,7 @@ void readCSV(char filename[]) {
 		i++;
 	}
 	printf("Reading finished");
+	fflush(stdout);
 
 	/* close file */
 	fclose(f);
