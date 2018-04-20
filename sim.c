@@ -15,6 +15,23 @@
 #include <sys/time.h>
 #include <stdlib.h>
 
+// Vector struct
+struct vec {
+	double x;
+	double y;
+	double z;
+};
+
+
+// Planetary struct using vectors 
+struct planet {
+	double mass; // Intrinsic property
+
+	struct vec p; // Position in vector
+	struct vec v; // Velocity in vector
+	struct vec a; // Acceleration in vector
+};
+
 // Total number of steps to perform
 int totalSteps = 1000;
 
@@ -26,22 +43,6 @@ struct vec vecAdd(struct vec v_1, struct vec v_2);
 void readCSV(planet planetSystem[]);
 void updater(int planet);
 
-// Vector struct
-typedef struct {
-	double x;
-	double y;
-	double z;
-} vec;
-
-
-// Planetary struct using vectors 
-typedef struct {
-	double mass; // Intrinsic property
-
-	struct vec p; // Position in vector
-	struct vec v; // Velocity in vector
-	struct vec a; // Acceleration in vector
-} planet ;
 
 // If "stepSize" is 1, then each step is 1 second. Scale as appropriate
 int stepSize = 60;
