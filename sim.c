@@ -21,9 +21,9 @@ int totalSteps = 1000;
 // Create pointers to functions
 void forkSoln();
 void *threadSoln();
-planet updatePlanet(planet planetSystem[]);
-vec vecAdd(vec v_1, vec v_2);
-void readCSV(planet planetSystem[]);
+struct planet updatePlanet(struct planet planetSystem[]);
+struct vec vecAdd(struct vec v_1, struct vec v_2);
+void readCSV(struct planet planetSystem[]);
 void updater(int planet);
 
 // Vector struct
@@ -38,9 +38,9 @@ struct vec {
 struct planet {
 	double mass; // Intrinsic property
 
-	vec p; // Position in vector
-	vec v; // Velocity in vector
-	vec a; // Acceleration in vector
+	struct vec p; // Position in vector
+	struct vec v; // Velocity in vector
+	struct vec a; // Acceleration in vector
 };
 
 // If "stepSize" is 1, then each step is 1 second. Scale as appropriate
@@ -49,7 +49,7 @@ int stepSize = 60;
 // Storage for solar system
 // 0 is sun, 1 is mercury, etc
 // Pluto IS a planet. Ignore the NASA illuminati propoganda!
-planet solarSystem[9];
+struct planet solarSystem[9];
 
 int main (int argc, char *argv[]) {
 
@@ -80,8 +80,8 @@ int main (int argc, char *argv[]) {
 }
 
 // Add two vectors (AKA sets of polar coordinates) together.
-vec vecAdd(vec v_1, vec v_2) {
-	vec sum;
+struct vec vecAdd(struct vec v_1, struct vec v_2) {
+	struct vec sum;
 	sum.x = v_1.x + v_2.x;
 	sum.y = v_1.y + v_2.y;
 	sum.z = v_1.z + v_2.z;
@@ -90,8 +90,8 @@ vec vecAdd(vec v_1, vec v_2) {
 }
 
 // Difference between two vectors
-vec delta(vec v_1, vec v_2) {
-	vec diff;
+struct vec delta(struct vec v_1, struct vec v_2) {
+	struct vec diff;
 	sum.x = v_1.x - v_2.x;
 	sum.y = v_1.y - v_2.y;
 	sum.z = v_1.z - v_2.z;
@@ -162,9 +162,9 @@ void readCSV(char filename[]) {
 // Updates the properties of the "active" planet using the rest of the 1
 // System is passed in as an array of planets, the active planet is determined based on its index in that array
 // NOTE: Synchronization does not happen here. The system may occasionally be out-of-sync, but this function doesn't care
-planet updatePlanet(planet planets[], int active) { 
+struct planet updatePlanet(struct planet planets[], int active) { 
 	int i;
-	planet activePlanet;
+	struct planet activePlanet;
 	// Unfortunately need to hardcode in 10 elements
 	for(i = 0; i < 10;i++) {
 		if(!(i==active)) {
