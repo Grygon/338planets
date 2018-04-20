@@ -37,12 +37,13 @@ int totalSteps = 1000;
 
 // Create pointers to functions
 void forkSoln();
-void *threadSoln();
+void threadSoln();
 struct planet updatePlanet(struct planet* planets[], int active);
 struct vec vecAdd(struct vec* v_1, struct vec* v_2);
 struct vec delta(struct vec* v_1, struct vec* v_2);
 void readCSV(char filename[]);
 void updater(int planet);
+double grav(double m, double r);
 
 
 // If "stepSize" is 1, then each step is 1 second. Scale as appropriate
@@ -61,7 +62,7 @@ int main (int argc, char *argv[]) {
 	readCSV("startData.csv");
 
 	// Save state
-	struct planet startData = solarSystem;
+	struct planet startData[9] = solarSystem;
 
 
 	// Run one solution at a time to compare
@@ -207,6 +208,7 @@ void threadSoln() {
 	// Array for planet values (for ease of passing, it's an array)
 	double planet[10];
 
+	int i;
 	// Set start values
 	for(i = 0; i < 10;i++) {
 		 planet[i] = i;
@@ -216,7 +218,7 @@ void threadSoln() {
 	pthread_t tid[10]; /* the thread identifiers */
 	for(i = 0; i < 10;i++) {
 		pthread_create(&tid[i], NULL, updater, &planet[i]);
-	}
+	}	
 
 
 }
