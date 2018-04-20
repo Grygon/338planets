@@ -21,27 +21,27 @@ int totalSteps = 1000;
 // Create pointers to functions
 void forkSoln();
 void *threadSoln();
-struct planet updatePlanet(struct planet planetSystem[]);
+struct planet updatePlanet(planet planetSystem[]);
 struct vec vecAdd(struct vec v_1, struct vec v_2);
-void readCSV(struct planet planetSystem[]);
+void readCSV(planet planetSystem[]);
 void updater(int planet);
 
 // Vector struct
-struct vec {
+typedef struct {
 	double x;
 	double y;
 	double z;
-};
+} vec;
 
 
 // Planetary struct using vectors 
-struct planet {
+typedef struct {
 	double mass; // Intrinsic property
 
 	struct vec p; // Position in vector
 	struct vec v; // Velocity in vector
 	struct vec a; // Acceleration in vector
-};
+} planet ;
 
 // If "stepSize" is 1, then each step is 1 second. Scale as appropriate
 int stepSize = 60;
