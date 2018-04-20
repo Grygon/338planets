@@ -86,9 +86,9 @@ int main (int argc, char *argv[]) {
 // Add two vectors (AKA sets of polar coordinates) together.
 struct vec vecAdd(struct vec* v_1, struct vec* v_2) {
 	struct vec sum;
-	sum.x = &v_1.x + &v_2.x;
-	sum.y = &v_1.y + &v_2.y;
-	sum.z = &v_1.z + &v_2.z;
+	sum.x = &v_1->x + &v_2->x;
+	sum.y = &v_1->y + &v_2->y;
+	sum.z = &v_1->z + &v_2->z;
 
 	return sum;
 }
@@ -96,9 +96,9 @@ struct vec vecAdd(struct vec* v_1, struct vec* v_2) {
 // Difference between two vectors
 struct vec delta(struct vec* v_1, struct vec* v_2) {
 	struct vec diff;
-	diff.x = &v_1.x - &v_2.x;
-	diff.y = &v_1.y - &v_2.y;
-	diff.z = &v_1.z - &v_2.z;
+	diff.x = &v_1->x - &v_2->x;
+	diff.y = &v_1->y - &v_2->y;
+	diff.z = &v_1->z - &v_2->z;
 
 	return diff;
 }
