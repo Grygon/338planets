@@ -34,7 +34,7 @@ struct planet {
 };
 
 // Total number of steps to perform
-int totalSteps = 1000;
+int totalSteps = 10000;
 
 // Create pointers to functions
 void forkSoln();
@@ -264,6 +264,14 @@ void threadSoln() {
 	}	
 
 
+	// Wait for threads to terminate
+	for(i = 0; i <= num_threads;i++) {
+		pthread_join(tid[i], NULL);	
+	}
+
+	// Print a result:
+	printf("Earth's location (in x) is: %d \n", solarSystem[3].p.x);
+
 }
 
 
@@ -271,8 +279,8 @@ void threadSoln() {
 void *updater(int* planet) {
 	int i = 0;
 	while(i < totalSteps) {
-		// Sync on 0th tick and then every $syncSteps after
-		if (i % syncSteps == 0) {
+		// Sync on 0th tick and then every $syncStep after
+		if (i % syncStep == 0) {
 			pthread_barrier_wait(&syncBarrier);
 		}
 
