@@ -23,6 +23,13 @@ struct vec {
 	long double z;
 };
 
+struct vec vecInit() {
+	struct vec blank;
+	blank.x = 0;
+	blank.y = 0;
+	blank.z = 0;
+	return blank;
+}
 
 // Planetary struct using vectors 
 struct planet {
@@ -33,8 +40,17 @@ struct planet {
 	struct vec a; // Acceleration in vector
 };
 
+struct planet planetInit() {
+	struct planet blank;
+	blank.mass = 0;
+	blank.p = vecInit();
+	blank.v = vecInit();
+	blank.a = vecInit();
+	return blank;
+}
+
 // Total number of steps to perform
-int totalSteps = 2; // 1 month is 2678400. Currently results in 7% error after 1 month of sim. I wonder if we need to take relativity into account. That'd be fun.
+int totalSteps = 60*60*24*365.25 ; // 1 month is 2678400. Currently results in 7% error after 1 month of sim. I wonder if we need to take relativity into account. That'd be fun.
 
 // Create pointers to functions
 void forkSoln();
@@ -48,9 +64,10 @@ long double grav(double m, long double r);
 
 
 // If "stepSize" is 1, then each step is 1 second. Scale as appropriate
-int stepSize = 60;
+// Not currently implemented. TODO
+int stepSize = 1;
 // Ensure all planets are on the same step every syncStep number of steps
-int syncStep = 50;
+int syncStep = 10;
 
 // Using a "brand new" thing I found, sync barriers!
 pthread_barrier_t syncBarrier;
@@ -59,9 +76,6 @@ pthread_barrier_t syncBarrier;
 // 0 is sun, 1 is mercury, etc
 // Pluto IS a planet. Ignore the NASA illuminati propoganda!
 struct planet solarSystem[9];
-
-// Planets ready to go?
-sem_t sync; 
 
 int main (int argc, char *argv[]) {
 
@@ -102,7 +116,7 @@ int main (int argc, char *argv[]) {
 
 // Add two vectors (AKA sets of polar coordinates) together.
 struct vec vecAdd(struct vec* v_1, struct vec* v_2) {
-	struct vec sum;
+	struct vec sum = vecInit();
 	sum.x = v_1->x + v_2->x;
 	sum.y = v_1->y + v_2->y;
 	sum.z = v_1->z + v_2->z;
@@ -112,7 +126,7 @@ struct vec vecAdd(struct vec* v_1, struct vec* v_2) {
 
 // Difference between two vectors
 struct vec delta(struct vec* v_1, struct vec* v_2) {
-	struct vec diff;
+	struct vec diff = vecInit();
 	diff.x = v_1->x - v_2->x;
 	diff.y = v_1->y - v_2->y;
 	diff.z = v_1->z - v_2->z;
@@ -127,10 +141,10 @@ struct vec delta(struct vec* v_1, struct vec* v_2) {
 void readCSV(char filename[]) {
 
 	// Temporary hardcoded implementation for the sake of the beta
-	solarSystem[0] = (struct planet){.p = (struct vec){.x=-1.068000648301820 * pow(10,6),.y=-4.176802125684930 * pow(10,5),.z=3.084467020687090 * pow(10,4)},.v = (struct vec){.x=9.305300847631915 * pow(10,-3),.y=-1.283176670344807 * pow(10,-2),.z=-1.631528028381386 * pow(10,-4)},.mass=1.98855*pow(10,30)};	
+	solarSystem[0] = (struct planet){.p = (struct vec){.x=-1.068000648301820 * pow(10,6),.y=-4.176802125684930 * pow(10,5),.z=3.084467020687090 * pow(10,4)},.v = (struct vec){.x=9.305300847631915 * pow(10,-3),.y=-1.283176670344807 * pow(10,-2),.z=-1.631528028381386 * pow(10,-4)},.mass=1.988544*pow(10,30)};	
 	solarSystem[1] = (struct planet){.p = (struct vec){.x=-2.212062175862221 * pow(10,7),.y=-6.682431829610253 * pow(10,7),.z=-3.461601353176080 * pow(10,6)},.v = (struct vec){.x=3.666229236478603 * pow(10,1),.y=-1.230266986781422 * pow(10,1),.z=-4.368336051784789 * pow(10,0)},.mass = 0.330103* pow(10,24)};
-	solarSystem[2] = (struct planet){.p = (struct vec){.x=-1.085735509178141 * pow(10,8),.y=-3.784200933160055 * pow(10,6),.z=6.190064472977990 * pow(10,6)},.v = (struct vec){.x=8.984651054838754 * pow(10,-1),.y=-3.517203950794635 * pow(10,1),.z=-5.320225582712421 * pow(10,-1)},.mass =4.13804 * pow(10,24)};
-	solarSystem[3] = (struct planet){.p = (struct vec){.x=-2.627892928682480 * pow(10,7),.y=1.445102393586391 * pow(10,8),.z=3.022818135935813 * pow(10,4)},.v = (struct vec){.x=-2.983052803283506 * pow(10,1),.y=-5.220465685407924 * pow(10,0),.z=-1.014621798034465 * pow(10,-4)},.mass = 5.97219 * pow(10,24)};
+	solarSystem[2] = (struct planet){.p = (struct vec){.x=-1.085735509178141 * pow(10,8),.y=-3.784200933160055 * pow(10,6),.z=6.190064472977990 * pow(10,6)},.v = (struct vec){.x=8.984651054838754 * pow(10,-1),.y=-3.517203950794635 * pow(10,1),.z=-5.320225582712421 * pow(10,-1)},.mass = 4.13804 * pow(10,24)};
+	solarSystem[3] = (struct planet){.p = (struct vec){.x=-2.627892928682480 * pow(10,7),.y=1.445102393586391 * pow(10,8),.z=3.022818135935813 * pow(10,4)},.v = (struct vec){.x=-2.983052803283506 * pow(10,1),.y=-5.220465685407924 * pow(10,0),.z=-1.014621798034465 * pow(10,-4)},.mass = 5.97226 * pow(10,24)};
 	solarSystem[4] = (struct planet){.p = (struct vec){.x=2.069270543147017 * pow(10,8),.y=-3.560689745239088 * pow(10,6),.z=-5.147936537447235 * pow(10,6)},.v = (struct vec){.x=1.304308833322233 * pow(10,0),.y=2.628158890420931 * pow(10,1),.z=5.188465740839767 * pow(10,-1)},.mass = 0.642736 * pow(10,24)};
 	solarSystem[5] = (struct planet){.p = (struct vec){.x=5.978411588543636 * pow(10,8),.y=4.387049129308410 * pow(10,8),.z=-1.520170148446965 * pow(10,7)},.v = (struct vec){.x=-7.892632330758821 * pow(10,0),.y=1.115034520921672 * pow(10,1),.z=1.305097532924950 * pow(10,-1)},.mass = 1898.5219 * pow(10,24)};
 	solarSystem[6] = (struct planet){.p = (struct vec){.x=9.576383363062742 * pow(10,8),.y=9.821475305205020 * pow(10,8),.z=-5.518981313640279 * pow(10,7)},.v = (struct vec){.x=-7.419580380567519 * pow(10,0),.y=6.725982472131615 * pow(10,0),.z=1.775012122796475 * pow(10,-1)},.mass = 568.466 * pow(10,24)};
@@ -138,6 +152,11 @@ void readCSV(char filename[]) {
 	solarSystem[8] = (struct planet){.p = (struct vec){.x=2.513785419503203 * pow(10,9),.y=-3.739265092576820 * pow(10,9),.z=1.907031792232442 * pow(10,7)},.v = (struct vec){.x=4.475105284920682 * pow(10,0),.y=3.062849397248741 * pow(10,0),.z=-1.667285646337855 * pow(10,-1)},.mass = 102.4311 * pow(10,24)};
 	solarSystem[9] = (struct planet){.p = (struct vec){.x=-1.478626340724678 * pow(10,9),.y=-4.182878118662979 * pow(10,9),.z=8.753002592760717 * pow(10,8)},.v = (struct vec){.x=5.271230989790396 * pow(10,0),.y=-2.661751411789654 * pow(10,0),.z=-1.242036206632027 * pow(10,0)},.mass = 0.0146 * pow(10,24)};
 
+	int i = 0;
+
+	for (i = 0;i <= 9;i++) {
+		solarSystem[i].a = vecInit();
+	}
 
 	return;
 
@@ -210,28 +229,27 @@ void readCSV(char filename[]) {
 // NOTE: Synchronization does not happen here. The system may occasionally be out-of-sync, but this function doesn't care
 struct planet updatePlanet(struct planet* planets[], int active) { 
 	int i;
-	struct planet activePlanet;
+	struct planet activePlanet = planetInit();
 	// Unfortunately need to hardcode in 10 elements	
 
 	for(i = 0; i <= 9;i++) {
 		if(!(i==active)) {
 			struct vec dist = delta(&(solarSystem[active].p), &(solarSystem[i].p));
-			if(active == 3 && i == 0) {
+			/* if(active == 3 && i == 0) {
 				printf("Dist: %Lf \n", dist.x);
 				printf("Dist: %Lf \n", dist.y);
 				printf("Dist: %Lf \n", dist.z);
+				printf("Accel: %Lf \n", activePlanet.a.x);
+				printf("Accel: %Lf \n", activePlanet.a.y);
+				printf("Accel: %Lf \n", activePlanet.a.z);
+				printf("CS: %Lf \n", (long double)(copysign(1.0,dist.x)));
+				printf("Grav: %Lf \n", grav(solarSystem[i].mass, dist.x));
 				fflush(stdout);
-			} 
+			} */
 			// Long problems somewhere down here
 			activePlanet.a.x = activePlanet.a.x + (long double)(copysign(1.0,dist.x)) * grav(solarSystem[i].mass, dist.x); // Copysign to ensure it's the right direction
 			activePlanet.a.y = activePlanet.a.y + (long double)(copysign(1.0,dist.y)) * grav(solarSystem[i].mass, dist.y); 
 			activePlanet.a.z = activePlanet.a.z + (long double)(copysign(1.0,dist.z)) * grav(solarSystem[i].mass, dist.z); 
-			if(active == 3 && i == 0) {
-				printf("Accel: %Lf \n", activePlanet.a.x);
-				printf("Accel: %Lf \n", activePlanet.a.y);
-				printf("Accel: %Lf \n", activePlanet.a.z);
-				fflush(stdout);
-			} 
 		}
 	}
 
@@ -247,7 +265,7 @@ struct planet updatePlanet(struct planet* planets[], int active) {
 // Calculates the acceleration due to an object of mass m at distance r
 // Returns in km/s
 long double grav(double m, long double r) {
-	return 6.674 * (long double)(pow(10, -20)) * m / (r * r);
+	return 6.6740831 * (long double)(pow(10, -20)) * m / (r * r);
 }
 
 // Solution using fork
