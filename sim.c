@@ -49,11 +49,16 @@ double grav(double m, double r);
 
 // If "stepSize" is 1, then each step is 1 second. Scale as appropriate
 int stepSize = 60;
+// Ensure all planets are on the same step every syncStep number of steps
+int syncStep = 500;
 
 // Storage for solar system
 // 0 is sun, 1 is mercury, etc
 // Pluto IS a planet. Ignore the NASA illuminati propoganda!
 struct planet solarSystem[9];
+
+// Planets ready to go?
+sem_t sync; 
 
 int main (int argc, char *argv[]) {
 
@@ -197,6 +202,10 @@ struct planet updatePlanet(struct planet* planets[], int active) {
 	int i;
 	struct planet activePlanet;
 	// Unfortunately need to hardcode in 10 elements
+
+	// TODO Implement sync here. 
+	// Sync on 0th tick and then every $syncSteps after
+
 	for(i = 0; i <= 9;i++) {
 		if(!(i==active)) {
 			struct vec dist = delta(&(planets[active]->p), &(planets[i]->p));
@@ -242,7 +251,10 @@ void threadSoln() {
 	// Prepare the child threads
 	pthread_t tid[10]; /* the thread identifiers */
 	for(i = 0; i <= 9;i++) {
-		printf("Starting planet %d\n", i);
+		printf("Starting planet %d\n", i); // WEEEE'VE GOT A SYNC ISSUE!
+		// I'm pretty sure planets start trying to calculate deltas on other planets before they're created. Need to implement a sync to get even the first step off the ground.
+		fflush(stdout);
+		// Seg fault after reading in planet 2-5 
 		pthread_create(&tid[i], NULL, updater, &planet[i]);
 	}	
 
