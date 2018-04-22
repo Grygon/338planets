@@ -52,6 +52,9 @@ int stepSize = 60;
 // Ensure all planets are on the same step every syncStep number of steps
 int syncStep = 500;
 
+// Using a "brand new" thing I found , sync barriers!
+pthread_barrier_t syncBarrier;
+
 // Storage for solar system
 // 0 is sun, 1 is mercury, etc
 // Pluto IS a planet. Ignore the NASA illuminati propoganda!
@@ -68,6 +71,9 @@ int main (int argc, char *argv[]) {
 	printf("Reading in data\n");
 	readCSV("startData.csv");
 	printf("Finished reading data\n");
+
+	// Create sync barrier
+	pthread_barrier_init(&syncBarrier, NULL, 10);
 
 	// Save state TODO (hard to copy arrays in C)
 	// struct planet startData[9] = solarSystem;
@@ -134,12 +140,13 @@ void readCSV(char filename[]) {
 	return;
 
 	// Come back to this post-beta
+	/*
 	int BSIZE = 80;
 	char buffer[BSIZE];
 	FILE *f;
 	char *field;
 
-	/* open the CSV file */
+	// open the CSV file 
 	f = fopen(filename,"r");
 	if( f == NULL)
 	{
@@ -150,37 +157,37 @@ void readCSV(char filename[]) {
 	// Index for read body
 	int i = 0;
 
-	/* process the data */
-	/* the file contains 8 fields */
+	// process the data 
+	// the file contains 8 fields 
 	// TODO implement parsing for exponents
 	printf("Reading initialized, accessing values\n");
 	fflush(stdout);
 	while(fgets(buffer,BSIZE,f))
 	{
-		/* skip name */
+		// Skip name
 		field=strtok(buffer,",");
-		/* get x position */
+		// get x position 
 		field=strtok(NULL,",");
 		printf(field);
 		fflush(stdout);
 		solarSystem[i].p.x=atoi(field); // Seg fault here. Field is X(km)-1.068000648301820E+06. 
 		// Why does it include 1st and 2nd rows? That's problem a, problem b is parsing
-		/* get y position */
+		// get y position 
 		field=strtok(NULL,",");
 		solarSystem[i].p.y=atoi(field);
-		/* get z position */
+		// get z position 
 		field=strtok(NULL,",");
 		solarSystem[i].p.z=atoi(field);
-		/* get x vel */
+		// get x vel 
 		field=strtok(NULL,",");
 		solarSystem[i].v.x=atoi(field);
-		/* get y vel */
+		// get y vel 
 		field=strtok(NULL,",");
 		solarSystem[i].v.y=atoi(field);
-		/* get z vel */
+		// get z vel 
 		field=strtok(NULL,",");
 		solarSystem[i].v.z=atoi(field);
-		/* get mass */
+		// get mass 
 		field=strtok(NULL,",");
 		solarSystem[i].mass=atoi(field);
 
@@ -189,8 +196,9 @@ void readCSV(char filename[]) {
 	printf("Reading finished");
 	fflush(stdout);
 
-	/* close file */
+	// close file 
 	fclose(f);
+	*/
 }
 
 
@@ -201,10 +209,7 @@ void readCSV(char filename[]) {
 struct planet updatePlanet(struct planet* planets[], int active) { 
 	int i;
 	struct planet activePlanet;
-	// Unfortunately need to hardcode in 10 elements
-
-	// TODO Implement sync here. 
-	// Sync on 0th tick and then every $syncSteps after
+	// Unfortunately need to hardcode in 10 elements	
 
 	for(i = 0; i <= 9;i++) {
 		if(!(i==active)) {
@@ -264,8 +269,13 @@ void threadSoln() {
 
 // Takes a planet and handles updates (on the solarSystem) for it while running
 void *updater(int* planet) {
-	int i;
+	int i = 0;
 	while(i < totalSteps) {
+		// Sync on 0th tick and then every $syncSteps after
+		if (i % syncSteps == 0) {
+			pthread_barrier_wait(&syncBarrier);
+		}
+
 		// Handle updating here to minimize conflicts where velocity/position changes halfway through reading it.
 		solarSystem[*planet] = updatePlanet(&solarSystem, *planet);
 		i++;
