@@ -52,7 +52,7 @@ int stepSize = 60;
 // Ensure all planets are on the same step every syncStep number of steps
 int syncStep = 500;
 
-// Using a "brand new" thing I found , sync barriers!
+// Using a "brand new" thing I found, sync barriers!
 pthread_barrier_t syncBarrier;
 
 // Storage for solar system
@@ -70,6 +70,7 @@ int main (int argc, char *argv[]) {
 	// Read in starting data at given time
 	printf("Reading in data\n");
 	readCSV("startData.csv");
+	printf("Earth's location (in x) is: %f \n", solarSystem[3].p.x);
 	printf("Finished reading data\n");
 
 	// Create sync barrier
@@ -214,10 +215,10 @@ struct planet updatePlanet(struct planet* planets[], int active) {
 
 	for(i = 0; i <= 9;i++) {
 		if(!(i==active)) {
-			struct vec dist = delta(&(planets[active]->p), &(planets[i]->p));
-			activePlanet.a.x += copysign(1.0,dist.x) * grav(planets[i]->mass, dist.x); // Copysign to ensure it's the right direction
-			activePlanet.a.y += copysign(1.0,dist.y) * grav(planets[i]->mass, dist.y); 
-			activePlanet.a.z += copysign(1.0,dist.z) * grav(planets[i]->mass, dist.z); 
+			struct vec dist = delta(&(solarSystem[active].p), &(solarSystem[i].p));
+			activePlanet.a.x += copysign(1.0,dist.x) * grav(solarSystem[i].mass, dist.x); // Copysign to ensure it's the right direction
+			activePlanet.a.y += copysign(1.0,dist.y) * grav(solarSystem[i].mass, dist.y); 
+			activePlanet.a.z += copysign(1.0,dist.z) * grav(solarSystem[i].mass, dist.z); 
 		}
 	}
 
@@ -284,14 +285,14 @@ void *updater(int* planet) {
 		// Sync on 0th tick and then every $syncStep after
 		if (i % syncStep == 0) {
 			pthread_barrier_wait(&syncBarrier);
+			fflush(stdout);
 		}
 
+		fflush(stdout);
 		// Handle updating here to minimize conflicts where velocity/position changes halfway through reading it.
 		solarSystem[*planet] = updatePlanet(&solarSystem, *planet);
 		i++;
 	}
-	// Final sync so everything has a chance to terminate
-	pthread_barrier_wait(&syncBarrier);
 
 	return;
 }
