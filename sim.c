@@ -122,6 +122,7 @@ struct vec delta(struct vec* v_1, struct vec* v_2) {
 
 // Adapted from http://c-for-dummies.com/blog/?p=2355
 // Reads the given file and places it in the solarSystem
+// All data thanks to https://ssd.jpl.nasa.gov/horizons.cgi
 void readCSV(char filename[]) {
 
 	// Temporary hardcoded implementation for the sake of the beta
@@ -256,7 +257,7 @@ void threadSoln() {
 	// Prepare the child threads
 	pthread_t tid[10]; /* the thread identifiers */
 	for(i = 0; i <= 9;i++) {
-		printf("Starting planet %d\n", i); // WEEEE'VE GOT A SYNC ISSUE!
+		printf("Starting planet %d\n", i); 
 		// I'm pretty sure planets start trying to calculate deltas on other planets before they're created. Need to implement a sync to get even the first step off the ground.
 		fflush(stdout);
 		// Seg fault after reading in planet 2-5 
@@ -267,6 +268,7 @@ void threadSoln() {
 	// Wait for threads to terminate
 	for(i = 0; i <= num_threads;i++) {
 		pthread_join(tid[i], NULL);	
+		printf("Terminating planet %d\n", i);
 	}
 
 	// Print a result:
