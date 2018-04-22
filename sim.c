@@ -266,13 +266,13 @@ void threadSoln() {
 
 
 	// Wait for threads to terminate
-	for(i = 0; i <= num_threads;i++) {
+	for(i = 0; i <= 9;i++) {
 		pthread_join(tid[i], NULL);	
 		printf("Terminating planet %d\n", i);
 	}
 
 	// Print a result:
-	printf("Earth's location (in x) is: %d \n", solarSystem[3].p.x);
+	printf("Earth's location (in x) is: %f \n", solarSystem[3].p.x);
 
 }
 
@@ -290,4 +290,8 @@ void *updater(int* planet) {
 		solarSystem[*planet] = updatePlanet(&solarSystem, *planet);
 		i++;
 	}
+	// Final sync so everything has a chance to terminate
+	pthread_barrier_wait(&syncBarrier);
+
+	return;
 }
