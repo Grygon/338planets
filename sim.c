@@ -18,9 +18,9 @@
 
 // Vector struct
 struct vec {
-	double x;
-	double y;
-	double z;
+	long double x;
+	long double y;
+	long double z;
 };
 
 
@@ -34,7 +34,7 @@ struct planet {
 };
 
 // Total number of steps to perform
-int totalSteps = 2678400; // 1 month is 2678400. Currently results in 7% error after 1 month of sim. I wonder if we need to take relativity into account. That'd be fun.
+int totalSteps = 2; // 1 month is 2678400. Currently results in 7% error after 1 month of sim. I wonder if we need to take relativity into account. That'd be fun.
 
 // Create pointers to functions
 void forkSoln();
@@ -44,7 +44,7 @@ struct vec vecAdd(struct vec* v_1, struct vec* v_2);
 struct vec delta(struct vec* v_1, struct vec* v_2);
 void readCSV(char filename[]);
 void *updater(int* planet);
-double grav(double m, double r);
+long double grav(double m, long double r);
 
 
 // If "stepSize" is 1, then each step is 1 second. Scale as appropriate
@@ -70,7 +70,7 @@ int main (int argc, char *argv[]) {
 	// Read in starting data at given time
 	printf("Reading in data\n");
 	readCSV("startData.csv");
-	printf("Earth's location (in x) is: %f \n", solarSystem[3].p.x);
+	printf("Earth's location (in x) is: %Lf \n", solarSystem[3].p.x);
 	printf("Finished reading data\n");
 
 	// Create sync barrier
@@ -216,9 +216,22 @@ struct planet updatePlanet(struct planet* planets[], int active) {
 	for(i = 0; i <= 9;i++) {
 		if(!(i==active)) {
 			struct vec dist = delta(&(solarSystem[active].p), &(solarSystem[i].p));
-			activePlanet.a.x = activePlanet.a.x + copysign(1.0,dist.x) * grav(solarSystem[i].mass, dist.x); // Copysign to ensure it's the right direction
-			activePlanet.a.y = activePlanet.a.y + copysign(1.0,dist.y) * grav(solarSystem[i].mass, dist.y); 
-			activePlanet.a.z = activePlanet.a.z + copysign(1.0,dist.z) * grav(solarSystem[i].mass, dist.z); 
+			if(active == 3 && i == 0) {
+				printf("Dist: %Lf \n", dist.x);
+				printf("Dist: %Lf \n", dist.y);
+				printf("Dist: %Lf \n", dist.z);
+				fflush(stdout);
+			} 
+			// Long problems somewhere down here
+			activePlanet.a.x = activePlanet.a.x + (long double)(copysign(1.0,dist.x)) * grav(solarSystem[i].mass, dist.x); // Copysign to ensure it's the right direction
+			activePlanet.a.y = activePlanet.a.y + (long double)(copysign(1.0,dist.y)) * grav(solarSystem[i].mass, dist.y); 
+			activePlanet.a.z = activePlanet.a.z + (long double)(copysign(1.0,dist.z)) * grav(solarSystem[i].mass, dist.z); 
+			if(active == 3 && i == 0) {
+				printf("Accel: %Lf \n", activePlanet.a.x);
+				printf("Accel: %Lf \n", activePlanet.a.y);
+				printf("Accel: %Lf \n", activePlanet.a.z);
+				fflush(stdout);
+			} 
 		}
 	}
 
@@ -233,8 +246,8 @@ struct planet updatePlanet(struct planet* planets[], int active) {
 
 // Calculates the acceleration due to an object of mass m at distance r
 // Returns in km/s
-double grav(double m, double r) {
-	return 6.674 * pow(10, -20) * m / (r * r);
+long double grav(double m, long double r) {
+	return 6.674 * (long double)(pow(10, -20)) * m / (r * r);
 }
 
 // Solution using fork
@@ -273,7 +286,8 @@ void threadSoln() {
 	}
 
 	// Print a result:
-	printf("Earth's location (in x) is: %f \n", solarSystem[3].p.x);
+	printf("Earth's location (in x) is: %Lf \n", solarSystem[3].p.x);
+	// Expected result after 1mo is -9.856777336025174E+07
 
 }
 
@@ -285,12 +299,7 @@ void *updater(int* planet) {
 		// Sync on 0th tick and then every $syncStep after
 		if (i % syncStep == 0) {
 			pthread_barrier_wait(&syncBarrier);
-			fflush(stdout); /*
-			if(*planet == 3) {
-				printf("Earth's location (in x) at step %d is: %f \n", i, solarSystem[3].p.x);
-				printf("Earth's location (in y) at step %d is: %f \n", i, solarSystem[3].p.y);
-				printf("Earth's location (in z) at step %d is: %f \n", i, solarSystem[3].p.z);
-			} */
+			fflush(stdout); 
 		}
 
 		fflush(stdout);
