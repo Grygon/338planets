@@ -34,7 +34,7 @@ struct planet {
 };
 
 // Total number of steps to perform
-int totalSteps = 10000;
+int totalSteps = 1000000;
 
 // Create pointers to functions
 void forkSoln();
@@ -216,17 +216,17 @@ struct planet updatePlanet(struct planet* planets[], int active) {
 	for(i = 0; i <= 9;i++) {
 		if(!(i==active)) {
 			struct vec dist = delta(&(solarSystem[active].p), &(solarSystem[i].p));
-			activePlanet.a.x += copysign(1.0,dist.x) * grav(solarSystem[i].mass, dist.x); // Copysign to ensure it's the right direction
-			activePlanet.a.y += copysign(1.0,dist.y) * grav(solarSystem[i].mass, dist.y); 
-			activePlanet.a.z += copysign(1.0,dist.z) * grav(solarSystem[i].mass, dist.z); 
+			activePlanet.a.x = activePlanet.a.x + copysign(1.0,dist.x) * grav(solarSystem[i].mass, dist.x); // Copysign to ensure it's the right direction
+			activePlanet.a.y = activePlanet.a.y + copysign(1.0,dist.y) * grav(solarSystem[i].mass, dist.y); 
+			activePlanet.a.z = activePlanet.a.z + copysign(1.0,dist.z) * grav(solarSystem[i].mass, dist.z); 
 		}
 	}
 
 	// Update velocity
-	activePlanet.v = vecAdd(&(activePlanet.a), &(activePlanet.v));
+	activePlanet.v = vecAdd(&(activePlanet.a), &(solarSystem[active].v));
 
 	// Update positions
-	activePlanet.p = vecAdd(&(activePlanet.p), &(activePlanet.v));
+	activePlanet.p = vecAdd(&(solarSystem[active].p), &(activePlanet.v));
 
 	return activePlanet;
 }
@@ -286,6 +286,11 @@ void *updater(int* planet) {
 		if (i % syncStep == 0) {
 			pthread_barrier_wait(&syncBarrier);
 			fflush(stdout);
+			if(*planet == 3) {
+				printf("Earth's location (in x) at step %d is: %f \n", i, solarSystem[3].p.x);
+				printf("Earth's location (in y) at step %d is: %f \n", i, solarSystem[3].p.y);
+				printf("Earth's location (in z) at step %d is: %f \n", i, solarSystem[3].p.z);
+			}
 		}
 
 		fflush(stdout);
