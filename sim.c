@@ -50,7 +50,9 @@ struct planet planetInit() {
 }
 
 // Total number of steps to perform
-int totalSteps = 60*60*24*365.25 ; // 1 month is 2678400. Currently results in 7% error after 1 month of sim. I wonder if we need to take relativity into account. That'd be fun.
+int totalSteps = 2678400; // 1 month is 2678400. Currently results in 7% error after 1 month of sim. I wonder if we need to take relativity into account. That'd be fun.
+
+long double expVal = -9.856777336025174 * pow(10,7);
 
 // Create pointers to functions
 void forkSoln();
@@ -67,7 +69,7 @@ long double grav(double m, long double r);
 // Not currently implemented. TODO
 int stepSize = 1;
 // Ensure all planets are on the same step every syncStep number of steps
-int syncStep = 10;
+int syncStep = 1;
 
 // Using a "brand new" thing I found, sync barriers!
 pthread_barrier_t syncBarrier;
@@ -133,7 +135,6 @@ struct vec delta(struct vec* v_1, struct vec* v_2) {
 
 	return diff;
 }
-
 
 // Adapted from http://c-for-dummies.com/blog/?p=2355
 // Reads the given file and places it in the solarSystem
@@ -230,26 +231,21 @@ void readCSV(char filename[]) {
 struct planet updatePlanet(struct planet* planets[], int active) { 
 	int i;
 	struct planet activePlanet = planetInit();
-	// Unfortunately need to hardcode in 10 elements	
 
+	// Unfortunately need to hardcode in 10 elements	
 	for(i = 0; i <= 9;i++) {
 		if(!(i==active)) {
 			struct vec dist = delta(&(solarSystem[active].p), &(solarSystem[i].p));
-			/* if(active == 3 && i == 0) {
-				printf("Dist: %Lf \n", dist.x);
-				printf("Dist: %Lf \n", dist.y);
-				printf("Dist: %Lf \n", dist.z);
-				printf("Accel: %Lf \n", activePlanet.a.x);
-				printf("Accel: %Lf \n", activePlanet.a.y);
-				printf("Accel: %Lf \n", activePlanet.a.z);
-				printf("CS: %Lf \n", (long double)(copysign(1.0,dist.x)));
-				printf("Grav: %Lf \n", grav(solarSystem[i].mass, dist.x));
+			activePlanet.a.x = activePlanet.a.x + copysign(1.0,dist.x) * grav(solarSystem[i].mass, dist.x); // Copysign to ensure it's the right direction
+			activePlanet.a.y = activePlanet.a.y + copysign(1.0,dist.y) * grav(solarSystem[i].mass, dist.y); 
+			activePlanet.a.z = activePlanet.a.z + copysign(1.0,dist.z) * grav(solarSystem[i].mass, dist.z); 
+			/*if(active == 3 && i == 0) {
+				printf("Accel: %Lf \n", grav(solarSystem[i].mass, dist.x) * 100000000000000);
+				printf("Accel: %Lf \n", activePlanet.a.x * 100000000000000);
+				printf("Accel: %Lf \n", activePlanet.a.y * 1000000);
+				printf("Accel: %Lf \n", activePlanet.a.z * 1000000);
 				fflush(stdout);
 			} */
-			// Long problems somewhere down here
-			activePlanet.a.x = activePlanet.a.x + (long double)(copysign(1.0,dist.x)) * grav(solarSystem[i].mass, dist.x); // Copysign to ensure it's the right direction
-			activePlanet.a.y = activePlanet.a.y + (long double)(copysign(1.0,dist.y)) * grav(solarSystem[i].mass, dist.y); 
-			activePlanet.a.z = activePlanet.a.z + (long double)(copysign(1.0,dist.z)) * grav(solarSystem[i].mass, dist.z); 
 		}
 	}
 
@@ -258,6 +254,9 @@ struct planet updatePlanet(struct planet* planets[], int active) {
 
 	// Update positions
 	activePlanet.p = vecAdd(&(solarSystem[active].p), &(activePlanet.v));
+
+	// Preserve mass
+	activePlanet.mass = solarSystem[active].mass;
 
 	return activePlanet;
 }
@@ -304,7 +303,7 @@ void threadSoln() {
 	}
 
 	// Print a result:
-	printf("Earth's location (in x) is: %Lf \n", solarSystem[3].p.x);
+	printf("Earth's location is %Lf%% off  \n", (expVal/solarSystem[3].p.x - 1) * 100);
 	// Expected result after 1mo is -9.856777336025174E+07
 
 }
