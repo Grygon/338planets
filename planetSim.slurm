@@ -4,8 +4,11 @@
 #SBATCH --time=0-00:01:00  # 01 minute, for the sake of testing
 #SBATCH --output=my_output.txt 
 
+
 cp * $PFSDIR/.
 cd $PFSDIR
-gcc -o sim sim.c -lrt
- 
+make
+./sim
+cp ./output ../planetSimOutput/
+
 ./sim
