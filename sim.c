@@ -50,7 +50,7 @@ struct planet planetInit() {
 }
 
 // Total number of steps to perform
-int totalSteps = 2678400; // 1 month is 2678400. Currently results in 7% error after 1 month of sim. I wonder if we need to take relativity into account. That'd be fun.
+int totalSteps = 2678400; // 1 month is 2678400. Currently results in huge error after 1 month of sim. I wonder if we need to take relativity into account. That'd be fun.
 
 long double expVal = -9.856777336025174 * pow(10,7);
 
@@ -72,6 +72,7 @@ int stepSize = 1;
 int syncStep = 1;
 
 // Using a "brand new" thing I found, sync barriers!
+// While these weren't covered in class, they fill our need perfectly.
 pthread_barrier_t syncBarrier;
 
 // Storage for solar system
@@ -161,7 +162,8 @@ void readCSV(char filename[]) {
 
 	return;
 
-	// Come back to this post-beta
+	// Post-beta implementation of CSV reading
+
 	/*
 	int BSIZE = 80;
 	char buffer[BSIZE];
@@ -221,6 +223,7 @@ void readCSV(char filename[]) {
 	// close file 
 	fclose(f);
 	*/
+
 }
 
 
@@ -236,10 +239,10 @@ struct planet updatePlanet(struct planet* planets[], int active) {
 	for(i = 0; i <= 9;i++) {
 		if(!(i==active)) {
 			struct vec dist = delta(&(solarSystem[active].p), &(solarSystem[i].p));
-			activePlanet.a.x = activePlanet.a.x + copysign(1.0,dist.x) * grav(solarSystem[i].mass, dist.x); // Copysign to ensure it's the right direction
-			activePlanet.a.y = activePlanet.a.y + copysign(1.0,dist.y) * grav(solarSystem[i].mass, dist.y); 
-			activePlanet.a.z = activePlanet.a.z + copysign(1.0,dist.z) * grav(solarSystem[i].mass, dist.z); 
-			/*if(active == 3 && i == 0) {
+			activePlanet.a.x = activePlanet.a.x - copysign(1.0,dist.x) * grav(solarSystem[i].mass, dist.x); // Copysign to ensure it's the right direction
+			activePlanet.a.y = activePlanet.a.y - copysign(1.0,dist.y) * grav(solarSystem[i].mass, dist.y); 
+			activePlanet.a.z = activePlanet.a.z - copysign(1.0,dist.z) * grav(solarSystem[i].mass, dist.z); 
+			/*if(active == 3 && i == 0) { // For debugging
 				printf("Accel: %Lf \n", grav(solarSystem[i].mass, dist.x) * 100000000000000);
 				printf("Accel: %Lf \n", activePlanet.a.x * 100000000000000);
 				printf("Accel: %Lf \n", activePlanet.a.y * 1000000);
@@ -269,7 +272,7 @@ long double grav(double m, long double r) {
 
 // Solution using fork
 void forkSoln() {
-
+	// Implemented post-beta. TODO
 }
 
 
@@ -289,9 +292,7 @@ void threadSoln() {
 	pthread_t tid[10]; /* the thread identifiers */
 	for(i = 0; i <= 9;i++) {
 		printf("Starting body %d\n", i); 
-		// I'm pretty sure planets start trying to calculate deltas on other planets before they're created. Need to implement a sync to get even the first step off the ground.
 		fflush(stdout);
-		// Seg fault after reading in planet 2-5 
 		pthread_create(&tid[i], NULL, updater, &planet[i]);
 	}	
 
@@ -324,6 +325,4 @@ void *updater(int* planet) {
 		solarSystem[*planet] = updatePlanet(&solarSystem, *planet);
 		i++;
 	}
-
-	return;
 }
