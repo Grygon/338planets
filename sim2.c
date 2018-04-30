@@ -21,6 +21,8 @@
 #include <sys/wait.h>
 #include <sys/types.h> 
 #include <sys/mman.h>
+#include <sys/shm.h>
+#include <fcntl.h>
 
 
 // Vector struct
@@ -57,7 +59,7 @@ Planet planetInit() {
 }
 
 // Total number of steps to perform
-int totalSteps = 2678400; // 1 month is 2678400. Currently results in huge error after 1 month of sim. I wonder if we need to take relativity into account. That'd be fun.
+int totalSteps = 2; //2678400; // 1 month is 2678400. Currently results in huge error after 1 month of sim. I wonder if we need to take relativity into account. That'd be fun.
 
 long double expVal = -98567773.36025174;
 
@@ -97,6 +99,8 @@ int syncStep = 1;
 // 0 is sun, 1 is mercury, etc
 // Pluto IS a planet. Ignore the NASA illuminati propoganda!
 static Planet *solarSystem;
+static int *syncPlanet;
+static sem_t *sem;
 
 int main (int argc, char *argv[]) {
 
@@ -106,6 +110,29 @@ int main (int argc, char *argv[]) {
     solarSystem = mmap(NULL, sizeof *solarSystem, PROT_READ | PROT_WRITE, 
                     MAP_SHARED | MAP_ANONYMOUS, -1, 0);
 
+
+    syncPlanet = mmap(NULL, sizeof *syncPlanet, PROT_READ | PROT_WRITE, 
+                    MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+
+    *syncPlanet = 0;
+
+    const int SIZE = 1;
+	const char *name = "ChrisFietkiewicz";
+	printf("Using shared memory named '%s'.\n\n", name);
+	int shm_fd;
+	// Create shared memory for semaphore
+	shm_fd = shm_open(name, O_CREAT | O_RDWR, 0666);
+	ftruncate(shm_fd,SIZE);
+	sem = mmap(0,SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
+	if (sem == MAP_FAILED) {
+		printf("Map failed\n");
+		exit(0);
+	}
+	// Set up semaphore
+	if(sem_init(sem, 1, 1) < 0) { // 1 = multiprocess
+		fprintf(stderr, "ERROR: could not initialize semaphore.\n");
+		exit(0);
+	}
 
     //syncBarrier = mmap(NULL, sizeof *syncBarrier, PROT_READ | PROT_WRITE,                   MAP_SHARED | MAP_ANONYMOUS, -1, 0);
 
@@ -421,6 +448,16 @@ void *updater(int* planet) {
 	while(i < totalSteps) {
 		// Sync on 0th tick and then every $syncStep after
 		if (i % syncStep == 0) {
+            if(*syncPlanet < 9) {
+                *syncPlanet += 1;
+                sem_wait(sem);
+                sem_post(sem);
+            }
+            else {
+                *syncPlanet = 0;
+                sem_post(sem);
+                sem_wait(sem);
+            }
 		}
 
 		// Handle updating here to minimize conflicts where velocity/position changes halfway through reading it.
@@ -436,7 +473,18 @@ void updater2(int planet) {
 	for (i = 0; i < totalSteps; i ++) {
 		// Sync on 0th tick and then every $syncStep after
 		if (i % syncStep == 0) {
-
+            if(*syncPlanet < 9) {
+                *syncPlanet += 1;
+                printf("Waiting i = %d: p = %d: t = %d\n", i, planet, *syncPlanet);
+                sem_wait(sem);
+                sem_post(sem);
+            }
+            else {
+                printf("Done i = %d: p = %d: t = %d\n", i, planet, *syncPlanet);
+                *syncPlanet = 0;
+                sem_post(sem);
+                sem_wait(sem);
+            }
 		}
 		// Handle updating here to minimize conflicts where velocity/position changes halfway through reading it.
 		updatePlanet(planet);
