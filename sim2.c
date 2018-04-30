@@ -74,7 +74,8 @@ long double vecMag(Vec v);
 long double grav(double m, long double r);
 void updatePlanet(int active);
 void readCSV(char filename[]);
-void *updater(int planet);
+void *updater(int *planet);
+void updater2(int planet);
 
 
 // If "stepSize" is 1, then each step is 1 second. Scale as appropriate
@@ -85,7 +86,7 @@ int syncStep = 1;
 
 // Using a "brand new" thing I found, sync barriers!
 // While these weren't covered in class, they fill our need perfectly.
-pthread_barrier_t syncBarrier;
+// pthread_barrier_t syncBarrier;
 
 // Storage for solar system
 // 0 is sun, 1 is mercury, etc
@@ -93,7 +94,7 @@ pthread_barrier_t syncBarrier;
 Planet solarSystem[9];
 
 int main (int argc, char *argv[]) {
-    
+    /*
     Vec v1 = newVec(1, 2, 3);
     vecAddi(&v1, v1, newVec(2,4,6));
     printVec(v1);
@@ -108,8 +109,7 @@ int main (int argc, char *argv[]) {
     printVec(e);
     printf("%Lf\n", vecMag(e));
     printVec(v1);
-
-/*
+*/
 	// Add in timing monitoring TODO
 
 	// Read in starting data at given time
@@ -142,7 +142,7 @@ int main (int argc, char *argv[]) {
 
 	// Do various timing comparisons to get the "interesting" data for the project TODO
 
-*/
+
 }
 
 Vec newVec(int vx, int vy, int vz) {
@@ -333,7 +333,7 @@ void forkSoln() {
     
 }
 
-
+/*
 // Solution using POSIX threads
 void threadSoln() {
 
@@ -351,7 +351,7 @@ void threadSoln() {
 	for(i = 0; i <= 9;i++) {
 		printf("Starting body %d\n", i); 
 		fflush(stdout);
-		pthread_create(&tid[i], NULL, updater, planet[i]);
+		pthread_create(&tid[i], NULL, updater, &planet[i]);
 	}	
 
 
@@ -366,16 +366,15 @@ void threadSoln() {
 	// Expected result after 1mo is -9.856777336025174E+07
 
 }
-
+*/
 
 // Takes a planet and handles updates (on the solarSystem) for it while running
-void *updater(int planet) {
+void updater2(int planet) {
     
 	int i = 0;
 	while(i < totalSteps) {
 		// Sync on 0th tick and then every $syncStep after
 		if (i % syncStep == 0) {
-			pthread_barrier_wait(&syncBarrier);
 			fflush(stdout); 
 		}
 
