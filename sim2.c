@@ -89,7 +89,7 @@ void updater2(int planet);
 // Not currently implemented. TODO
 int stepSize = 1;
 // Ensure all planets are on the same step every syncStep number of steps
-int syncStep = 1;
+int syncStep = 1000;
 
 // Using a "brand new" thing I found, sync barriers!
 // While these weren't covered in class, they fill our need perfectly.
