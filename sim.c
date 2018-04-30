@@ -23,6 +23,7 @@
 #include <sys/mman.h>
 #include <sys/shm.h>
 #include <fcntl.h>
+#include <ctype.h>
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h" // Handy library for image writing. https://github.com/nothings/stb
 
@@ -105,11 +106,36 @@ static Planet *solarSystem;
 static int *syncPlanet;
 static sem_t *sem, *sem2;
 
+// For CLI flags
+int numImages = 0;
+
 int main (int argc, char *argv[]) {
 
-	// CLI flag handling TODO
+	// CLI flag handling
+	int i;
 
-	
+	// Possible arguments
+	const char* possibleArgs[2] = {"--images", "--finalState"};
+
+	// Final result printing. If negative, doesn't print
+	int finalResult = -1;
+
+	for (i=1;i<argc;i++) {
+		if (strcmp(possibleArgs[0], argv[i]) == 0) { // Unfortunately can't swtich on a string
+			// Image flag case
+			numImages = atoi(argv[++i]);
+		} else if (strcmp(possibleArgs[1], argv[i]) == 0) {
+			// For final state flag, check it's within bounds
+			if (atoi(argv[i+1]) < 10 && atoi(argv[i+1]) >= 0)
+				finalResult = atoi(argv[++i]);
+			else
+				printf("Final state flag requires number between 0 and 9\n");
+		} else {
+			printf("Unknown argument passed\n");
+			return 0;
+		}
+	}
+
 
 
 	// Timers to time the two approaches
@@ -200,15 +226,17 @@ int main (int argc, char *argv[]) {
 	printf("Threaded simulation took %f seconds\n", threadRuntime);
 
 	// Compare final states TODO		
-	int i;
 	double diff;
 	for (i = 0;i<=9;i++) {
 		diff = 0;
 	}
 
 	printf("The final states of the two simulations are %f%% different\n", diff);
-	char* fileName = "testImage.bmp";
-	createImage(fileName);
+
+	if (finalResult > 0) {
+		printf("Final state of body %d:\n", finalResult);
+		printVec(solarSystem[finalResult].p);
+	}
 }
 
 Vec newVec(int vx, int vy, int vz) {
