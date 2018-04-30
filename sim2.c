@@ -137,7 +137,7 @@ int main (int argc, char *argv[]) {
 		fprintf(stderr, "ERROR: could not initialize semaphore.\n");
 		exit(0);
 	}
-    
+
     shm_fd2 = shm_open(name2, O_CREAT | O_RDWR, 0666);
 	ftruncate(shm_fd2,SIZE);
     sem2 = mmap(0,SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd2, 0);
@@ -507,6 +507,7 @@ void updater2(int planet) {
                 sem_post(sem2);
 
                 sem_wait(sem);
+                printf("done");
             }
 		}
 		// Handle updating here to minimize conflicts where velocity/position changes halfway through reading it.
