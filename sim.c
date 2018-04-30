@@ -86,7 +86,7 @@ void updatePlanet(int active);
 void readData(char filename[]);
 void *updater(int *planet);
 void updater2(int planet);
-void createImage();
+void createImage(char* name);
 
 // If "stepSize" is 1, then each step is 1 second. Scale as appropriate
 // Not currently implemented. TODO
@@ -106,6 +106,10 @@ static int *syncPlanet;
 static sem_t *sem, *sem2;
 
 int main (int argc, char *argv[]) {
+
+	// CLI flag handling TODO
+
+	
 
 
 	// Timers to time the two approaches
@@ -203,7 +207,8 @@ int main (int argc, char *argv[]) {
 	}
 
 	printf("The final states of the two simulations are %f%% different\n", diff);
-	createImage();
+	char* fileName = "testImage.bmp";
+	createImage(fileName);
 }
 
 Vec newVec(int vx, int vy, int vz) {
@@ -464,7 +469,7 @@ void updater2(int planet) {
 }
 
 // When called, creates an image of the system at the current state.
-void createImage() {
+void createImage(char* name) {
 	// Max distance pluto can be, which means scaling down by this factor will properly scale everything within bounds
 	long double maxVal = 6 * pow(10, 9);
 
@@ -489,6 +494,6 @@ void createImage() {
 	}
 
 	// Use a handy external library to write the data
-	if(stbi_write_bmp("testFile.bmp", size, size, 1, &imageData) == 0)
+	if(stbi_write_bmp(name, size, size, 1, &imageData) == 0)
 		printf("Image writing failed\n");
 }
