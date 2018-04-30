@@ -89,9 +89,6 @@ void *updater(int *planet);
 void updater2(int planet);
 void createImage(char* name);
 
-// If "stepSize" is 1, then each step is 1 second. Scale as appropriate
-// Not currently implemented. TODO
-int stepSize = 1;
 // Ensure all planets are on the same step every syncStep number of steps
 int syncStep = 86400;
 
@@ -372,9 +369,7 @@ void readData(char filename[]) {
 
 // Solution using fork
 void forkSoln() {
-	
-    // Implemented post-beta. TODO
-    
+	   
     int i;
     pid_t pid = 0;
     for (i = 0; i < 10; i++) {
@@ -382,22 +377,13 @@ void forkSoln() {
 		fflush(stdout);
         pid = fork();
         if (pid == 0){
-            updater2(i);
+            *updater(&i);
             exit(0);
         }
     } 
     for (i = 0; i < 10; i++){
         wait(NULL);
     }
-    /*
-    int i;
-	for (i = 0; i < totalSteps; i++) {
-		int j;
-        for (j = 0; j < 10; j++){
-           updatePlanet(j);
-        }
-	}
-    */
     printf("Earth's location is %Lf%% off  \n", (expVal-solarSystem[3].p.x)/expVal * 100);
 }
 
@@ -434,6 +420,7 @@ void threadSoln() {
 
 // Takes a planet and handles updates (on the solarSystem) for it while running
 void *updater(int* planet) {
+
 	int i = 0;
 	while(i < totalSteps) {
 		// Sync on 0th tick and then every $syncStep after
@@ -462,38 +449,6 @@ void *updater(int* planet) {
 		updatePlanet(*planet);
 		i++;
 	}
-}
-
-// Takes a planet and handles updates (on the solarSystem) for it while running
-void updater2(int planet) {
-    
-	int i;
-	for (i = 0; i < totalSteps; i ++) {
-		// Sync on 0th tick and then every $syncStep after
-		if (i % syncStep == 0) {
-            sem_wait(sem2);
-            if(*syncPlanet < 9) {
-                
-                *syncPlanet += 1;
-                sem_post(sem2);
-                sem_wait(sem);
-                *syncPlanet += 1;
-                sem_post(sem);
-            }
-            else {
-                *syncPlanet = 0;
-                sem_post(sem);
-                while (*syncPlanet < 9) {}
-                *syncPlanet = 0;
-                sem_wait(sem);
-
-                sem_post(sem2);
-            }
-		}
-		// Handle updating here to minimize conflicts where velocity/position changes halfway through reading it.
-		updatePlanet(planet);
-	}
-    
 }
 
 // When called, creates an image of the system at the current state.
