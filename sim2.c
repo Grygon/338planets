@@ -129,7 +129,7 @@ int main (int argc, char *argv[]) {
 		exit(0);
 	}
 	// Set up semaphore
-	if(sem_init(sem, 1, 1) < 0) { // 1 = multiprocess
+	if(sem_init(sem, 1, 0) < 0) { // 1 = multiprocess
 		fprintf(stderr, "ERROR: could not initialize semaphore.\n");
 		exit(0);
 	}
