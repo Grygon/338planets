@@ -62,7 +62,7 @@ Planet planetInit() {
 }
 
 // Total number of steps to perform
-int totalSteps = 267840; // 1 month is 2678400. Currently results in huge error after 1 month of sim. I wonder if we need to take relativity into account. That'd be fun.
+int totalSteps = 2678400; // 1 month is 2678400. Currently results in huge error after 1 month of sim. I wonder if we need to take relativity into account. That'd be fun.
 
 long double expVal = -98567773.36025174;
 
@@ -121,6 +121,7 @@ int main (int argc, char *argv[]) {
 		if (strcmp(possibleArgs[0], argv[i]) == 0) { // Unfortunately can't swtich on a string
 			// Image flag case
 			numImages = atoi(argv[++i]);
+			printf("Please note that creating images means the threaded solution will take longer than the forked solution\n");
 		} else if (strcmp(possibleArgs[1], argv[i]) == 0) {
 			// For final state flag, check it's within bounds
 			if (atoi(argv[i+1]) < 10 && atoi(argv[i+1]) >= 0)
@@ -151,7 +152,6 @@ int main (int argc, char *argv[]) {
 	const char *name = "planetSim1";
     const char *name2 = "planetSim2";
 
-	printf("Using shared memory named '%s'.\n\n", name);
 	int shm_fd, shm_fd2;
 
 	// Create shared memory for semaphore
@@ -199,7 +199,9 @@ int main (int argc, char *argv[]) {
 
 	// Store results of fork
 	Planet forkResults[10];
-	memcpy(&forkResults, &planets, sizeof(planets));
+	for(i = 0;i <= 9;i++) {
+		memcpy(&forkResults[i], &solarSystem[i], sizeof(solarSystem[i]));
+	}
 
 	// Read in starting data to start thread at same point
 	readData("startData.csv");
@@ -230,12 +232,18 @@ int main (int argc, char *argv[]) {
 	printf("Threaded simulation took %f seconds\n", threadRuntime);
 
 	// Compare final states TODO		
-	double diff;
+	double diff = 0;
 	for (i = 0;i<=9;i++) {
-		diff = 0;
+		Vec offset = delta(solarSystem[i].p, forkResults[i].p);
+		diff += offset.x / solarSystem[i].p.x;
+		diff += offset.y / solarSystem[i].p.y;
+		diff += offset.z / solarSystem[i].p.z;
 	}
 
-	printf("The final states of the two simulations are %f%% different\n", diff);
+	if (diff / 30 < 0.00001)
+		printf("The final states of the two simulations are negligable\n");
+	else
+		printf("The final states of the two simulations are %.3f%% different\n", diff / 30);
 
 	if (finalResult > 0) {
 		printf("Final state of body %d:\n", finalResult);
@@ -380,8 +388,6 @@ void forkSoln() {
     int i;
     pid_t pid = 0;
     for (i = 0; i < 10; i++) {
-        printf("Starting body %d\n", i); 
-		fflush(stdout);
         pid = fork();
         if (pid == 0){
             *updater(&i);
