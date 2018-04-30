@@ -504,12 +504,12 @@ void updater2(int planet) {
             else {
                 *syncPlanet = 0;
                 printf("Done i = %d: p = %d: t = %d\n", i, planet, *syncPlanet);
-                sem_post(sem2);
                 fflush(stdout);
                 sem_post(sem);
                 sem_wait(sem);
-
                 printf("done\n");
+
+                sem_post(sem2);
             }
 		}
 		// Handle updating here to minimize conflicts where velocity/position changes halfway through reading it.
