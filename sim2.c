@@ -123,8 +123,14 @@ int main (int argc, char *argv[]) {
 	// Reset global storage of solarSystem TODO see above
 	// solarSystem = startData;
 
+    printf("Reading in data\n");
+	readCSV("startData.csv");
+	printf("Earth's location is: ");
+    printVec(solarSystem[3].p);
+	printf("Finished reading data\n");
+    
 	// Thread based solution
-//	threadSoln();
+	threadSoln();
 
 	// Test cases TODO
 
@@ -200,7 +206,7 @@ void vecDiri(Vec *v){
 }
 
 long double vecMag(Vec v) {
-    return sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
+    return sqrtl(v.x * v.x + v.y * v.y + v.z * v.z);
 }
 
 long double grav(double m, long double r) {
@@ -364,7 +370,7 @@ void forkSoln() {
     */
     printf("Earth's location is %Lf%% off  \n", (expVal-solarSystem[3].p.x)/expVal * 100);
 }
-/*
+
 // Solution using POSIX threads
 void threadSoln() {
 
@@ -393,7 +399,7 @@ void threadSoln() {
 	}
 
 	// Print a result:
-	printf("Earth's location is %Lf%% off  \n", (expVal/solarSystem[3].p.x - 1) * 100);
+    printf("Earth's location is %Lf%% off  \n", (expVal-solarSystem[3].p.x)/expVal * 100);
 	// Expected result after 1mo is -9.856777336025174E+07
 
 }
@@ -413,7 +419,7 @@ void updater(int* planet) {
 		updatePlanet(*planet);
 		i++;
 	}
-}*/
+}
 
 // Takes a planet and handles updates (on the solarSystem) for it while running
 void updater2(int planet) {
