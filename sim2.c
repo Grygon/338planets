@@ -119,8 +119,11 @@ int main (int argc, char *argv[]) {
 
     const int SIZE = 1;
 	const char *name = "ChrisFietkiewicz";
+    const char *name2 = "ChrisFietkiewicz2";
+
 	printf("Using shared memory named '%s'.\n\n", name);
-	int shm_fd;
+	int shm_fd, shm_fd2;
+
 	// Create shared memory for semaphore
 	shm_fd = shm_open(name, O_CREAT | O_RDWR, 0666);
 	ftruncate(shm_fd,SIZE);
@@ -134,7 +137,10 @@ int main (int argc, char *argv[]) {
 		fprintf(stderr, "ERROR: could not initialize semaphore.\n");
 		exit(0);
 	}
-    sem2 = mmap(0,SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
+    
+    shm_fd2 = shm_open(name2, O_CREAT | O_RDWR, 0666);
+	ftruncate(shm_fd2,SIZE);
+    sem2 = mmap(0,SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd2, 0);
 	if (sem2 == MAP_FAILED) {
 		printf("Map failed\n");
 		exit(0);
@@ -499,7 +505,7 @@ void updater2(int planet) {
                 sem_wait(sem2);
                 sem_post(sem);
                 sem_post(sem2);
-                
+
                 sem_wait(sem);
             }
 		}
