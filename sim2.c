@@ -80,7 +80,7 @@ long double vecMag(Vec v);
 long double grav(double m, long double r);
 void updatePlanet(int active);
 void readCSV(char filename[]);
-void updater(int *planet);
+void *updater(int *planet);
 void updater2(int planet);
 
 // If "stepSize" is 1, then each step is 1 second. Scale as appropriate
@@ -130,7 +130,7 @@ int main (int argc, char *argv[]) {
 
 	// Reset global storage of solarSystem TODO see above
 	// solarSystem = startData;
-/*
+
     printf("Reading in data\n");
 	readCSV("startData.csv");
 	printf("Earth's location is: ");
@@ -139,7 +139,7 @@ int main (int argc, char *argv[]) {
 
 	// Thread based solution
 	threadSoln();
-*/
+
 	// Test cases TODO
 
 
@@ -381,7 +381,7 @@ void forkSoln() {
     */
     printf("Earth's location is %Lf%% off  \n", (expVal-solarSystem[3].p.x)/expVal * 100);
 }
-/*
+
 // Solution using POSIX threads
 void threadSoln() {
 
@@ -399,7 +399,7 @@ void threadSoln() {
 	for(i = 0; i <= 9;i++) {
 		printf("Starting body %d\n", i); 
 		fflush(stdout);
-		pthread_create(&tid[i], NULL, *updater, &planet[i]);
+		pthread_create(&tid[i], NULL, updater, &planet[i]);
 	}	
 
 
@@ -416,22 +416,19 @@ void threadSoln() {
 }
 
 // Takes a planet and handles updates (on the solarSystem) for it while running
-void updater(int* planet) {
+void *updater(int* planet) {
 	int i = 0;
 	while(i < totalSteps) {
 		// Sync on 0th tick and then every $syncStep after
 		if (i % syncStep == 0) {
-			pthread_barrier_wait(&syncBarrier);
-			fflush(stdout); 
 		}
 
-		fflush(stdout);
 		// Handle updating here to minimize conflicts where velocity/position changes halfway through reading it.
 		updatePlanet(*planet);
 		i++;
 	}
 }
-*/
+
 // Takes a planet and handles updates (on the solarSystem) for it while running
 void updater2(int planet) {
     
