@@ -491,7 +491,9 @@ void updater2(int planet) {
 		// Sync on 0th tick and then every $syncStep after
 		if (i % syncStep == 0) {
             if(*syncPlanet < 9) {
+                sem_wait(sem2);
                 *syncPlanet += 1;
+                sem_post(sem2);
                 printf("Waiting i = %d: p = %d: t = %d\n", i, planet, *syncPlanet);
                 fflush(stdout);
                 sem_wait(sem);
@@ -499,7 +501,9 @@ void updater2(int planet) {
                 sem_post(sem);
             }
             else {
+                sem_wait(sem2);
                 *syncPlanet = 0;
+                sem_post(sem2);
                 printf("Done i = %d: p = %d: t = %d\n", i, planet, *syncPlanet);
                 fflush(stdout);
                 sem_post(sem);
