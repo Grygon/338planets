@@ -57,7 +57,7 @@ Planet planetInit() {
 }
 
 // Total number of steps to perform
-int totalSteps = 2;//2678400; // 1 month is 2678400. Currently results in huge error after 1 month of sim. I wonder if we need to take relativity into account. That'd be fun.
+int totalSteps = 2678400; // 1 month is 2678400. Currently results in huge error after 1 month of sim. I wonder if we need to take relativity into account. That'd be fun.
 
 long double expVal = -98567773.36025174;
 
@@ -91,26 +91,23 @@ int syncStep = 1;
 
 // Using a "brand new" thing I found, sync barriers!
 // While these weren't covered in class, they fill our need perfectly.
-static pthread_barrier_t *syncBarrier;
+//static pthread_barrier_t *syncBarrier;
 
 // Storage for solar system
 // 0 is sun, 1 is mercury, etc
 // Pluto IS a planet. Ignore the NASA illuminati propoganda!
-Planet solarSystem[10];
-
-static int *pcountp;
+static Planet *solarSystem;
 
 int main (int argc, char *argv[]) {
 
 	// Add in timing monitoring TODO
-
-    pcountp = mmap(NULL, sizeof *pcountp, PROT_READ | PROT_WRITE, 
+    Planet planets[10];
+    solarSystem = &planets;
+    solarSystem = mmap(NULL, sizeof *solarSystem, PROT_READ | PROT_WRITE, 
                     MAP_SHARED | MAP_ANONYMOUS, -1, 0);
 
-    *pcountp = 0;
 
-    syncBarrier = mmap(NULL, sizeof *syncBarrier, PROT_READ | PROT_WRITE, 
-                    MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+    //syncBarrier = mmap(NULL, sizeof *syncBarrier, PROT_READ | PROT_WRITE,                   MAP_SHARED | MAP_ANONYMOUS, -1, 0);
 
 	// Read in starting data at given time
 	printf("Reading in data\n");
@@ -120,7 +117,7 @@ int main (int argc, char *argv[]) {
 	printf("Finished reading data\n");
 
 	// Create sync barrier
-	pthread_barrier_init(syncBarrier, NULL, 10);
+//pthread_barrier_init(syncBarrier, NULL, 10);
 
 	// Save state TODO (hard to copy arrays in C)
 	// Planet startData[9] = solarSystem;
@@ -442,7 +439,7 @@ void updater2(int planet) {
 	for (i = 0; i < totalSteps; i ++) {
 		// Sync on 0th tick and then every $syncStep after
 		if (i % syncStep == 0) {
-            pthread_barrier_wait(syncBarrier);
+
 		}
 		// Handle updating here to minimize conflicts where velocity/position changes halfway through reading it.
 		updatePlanet(planet);
