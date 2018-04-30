@@ -100,8 +100,7 @@ int syncStep = 1;
 // Pluto IS a planet. Ignore the NASA illuminati propoganda!
 static Planet *solarSystem;
 static int *syncPlanet;
-static sem_t *sem;
-static sem_t *sem2;
+static sem_t *sem, *sem2, *sem3;
 
 int main (int argc, char *argv[]) {
 
@@ -120,6 +119,7 @@ int main (int argc, char *argv[]) {
     const int SIZE = 1;
 	const char *name = "ChrisFietkiewicz";
     const char *name2 = "ChrisFietkiewicz2";
+    const char *name3 = "ChrisFietkiewicz3";
 
 	printf("Using shared memory named '%s'.\n\n", name);
 	int shm_fd, shm_fd2;
@@ -147,6 +147,19 @@ int main (int argc, char *argv[]) {
 	}
 	// Set up semaphore
 	if(sem_init(sem2, 1, 1) < 0) { // 1 = multiprocess
+		fprintf(stderr, "ERROR: could not initialize semaphore.\n");
+		exit(0);
+	}
+
+    shm_fd3 = shm_open(name3, O_CREAT | O_RDWR, 0666);
+	ftruncate(shm_fd2,SIZE);
+    sem3 = mmap(0,SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd3, 0);
+	if (sem3 == MAP_FAILED) {
+		printf("Map failed\n");
+		exit(0);
+	}
+	// Set up semaphore
+	if(sem_init(sem3, 1, 1) < 0) { // 1 = multiprocess
 		fprintf(stderr, "ERROR: could not initialize semaphore.\n");
 		exit(0);
 	}
@@ -498,7 +511,7 @@ void updater2(int planet) {
                 sem_post(sem2);
                 fflush(stdout);
                 sem_wait(sem);
-
+                *syncPlanet += 1;
                 sem_post(sem);
             }
             else {
@@ -506,6 +519,8 @@ void updater2(int planet) {
                 printf("Done i = %d: p = %d: t = %d\n", i, planet, *syncPlanet);
                 fflush(stdout);
                 sem_post(sem);
+                while (*syncPlanet < 9) {}
+                *syncPlanet = 0;
                 sem_wait(sem);
                 printf("done\n");
 
