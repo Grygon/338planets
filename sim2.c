@@ -493,8 +493,8 @@ void updater2(int planet) {
             if(*syncPlanet < 9) {
                 sem_wait(sem2);
                 *syncPlanet += 1;
-                sem_post(sem2);
                 printf("Waiting i = %d: p = %d: t = %d\n", i, planet, *syncPlanet);
+                sem_post(sem2);
                 fflush(stdout);
                 sem_wait(sem);
 
@@ -503,8 +503,8 @@ void updater2(int planet) {
             else {
                 sem_wait(sem2);
                 *syncPlanet = 0;
-                sem_post(sem2);
                 printf("Done i = %d: p = %d: t = %d\n", i, planet, *syncPlanet);
+                sem_post(sem2);
                 fflush(stdout);
                 sem_post(sem);
                 sem_wait(sem);
