@@ -17,6 +17,10 @@
 #include <sys/time.h>
 #include <stdlib.h>
 #include <tgmath.h>
+#include <unistd.h>
+#include <sys/wait.h>
+#include <sys/types.h> 
+
 
 // Vector struct
 typedef struct Vecs {
@@ -61,6 +65,7 @@ void forkSoln();
 void threadSoln();
 Vec newVec(int x, int y, int z);
 void printVec(Vec v);
+void vecReset(Vec *v);
 Planet newPlanet(long double mass, Vec p, Vec v, Vec a);
 Vec vecAdd(Vec v1, Vec v2);
 void vecAddi(Vec *res, Vec v1, Vec v2);
@@ -77,7 +82,6 @@ void readCSV(char filename[]);
 void updater(int *planet);
 void updater2(int planet);
 
-
 // If "stepSize" is 1, then each step is 1 second. Scale as appropriate
 // Not currently implemented. TODO
 int stepSize = 1;
@@ -91,31 +95,17 @@ pthread_barrier_t syncBarrier;
 // Storage for solar system
 // 0 is sun, 1 is mercury, etc
 // Pluto IS a planet. Ignore the NASA illuminati propoganda!
-Planet solarSystem[9];
+Planet solarSystem[10];
 
 int main (int argc, char *argv[]) {
-    /*
-    Vec v1 = newVec(1, 2, 3);
-    vecAddi(&v1, v1, newVec(2,4,6));
-    printVec(v1);
-    printf("%Lf\n", vecMag(v1));
 
-    printf("%Lf\n", 3 / vecMag(v1));
-
-    vecScale(&v1, (long double) 1/3);
-    printVec(v1);
-
-    Vec e = vecDir(v1);
-    printVec(e);
-    printf("%Lf\n", vecMag(e));
-    printVec(v1);
-*/
 	// Add in timing monitoring TODO
 
 	// Read in starting data at given time
 	printf("Reading in data\n");
 	readCSV("startData.csv");
-	printf("Earth's location (in x) is: %Lf \n", solarSystem[3].p.x);
+	printf("Earth's location is: ");
+    printVec(solarSystem[3].p);
 	printf("Finished reading data\n");
 
 	// Create sync barrier
@@ -128,13 +118,13 @@ int main (int argc, char *argv[]) {
 	// Run one solution at a time to compare
 
 	// Fork based solution
-	// forkSoln();
+    forkSoln();
 
 	// Reset global storage of solarSystem TODO see above
 	// solarSystem = startData;
 
 	// Thread based solution
-	threadSoln();
+//	threadSoln();
 
 	// Test cases TODO
 
@@ -152,6 +142,13 @@ Vec newVec(int vx, int vy, int vz) {
 void printVec(Vec v) {
     printf("(%Lf, %Lf, %Lf)\n", v.x, v.y, v.z);
 }
+
+void vecReset(Vec *v) {
+	v->x = 0;
+    v->y = 0;
+    v->z = 0;
+}
+
 
 Planet newPlanet(long double mass, Vec p, Vec v, Vec a){
     return (Planet){.mass = mass, .p = p, .v = v, .a = a};
@@ -207,7 +204,7 @@ long double vecMag(Vec v) {
 }
 
 long double grav(double m, long double r) {
-    return -1 * 6.6740831 * (long double)(pow(10, -20)) * m / (r * r);
+    return -6.6740831 * (long double)(pow(10, -20)) * m / (r * r);
 }
 
 // Updates the properties of the "active" planet using the rest of the 1
@@ -215,23 +212,36 @@ long double grav(double m, long double r) {
 // NOTE: Synchronization does not happen here. The system may occasionally be out-of-sync, but this function doesn't care
 void updatePlanet(int active) { 
 	int i;
-	Planet *activePlanet = &solarSystem[active];
-	
+    // store "init" acceleration and velocity
+    Vec accel = solarSystem[active].a;
+    Vec veloc = solarSystem[active].v;
+
+    // reset net gravitational acceleration to 0
+    vecReset(&solarSystem[active].a);
+
+    // Update acceleration
 	for(i = 0; i <= 9;i++) {
 		if(!(i==active)) {
-			Vec dist = delta(solarSystem[active].p, solarSystem[i].p);
+            Vec dist = delta(solarSystem[active].p, solarSystem[i].p);
             long double distMag = vecMag(dist);
-			activePlanet->a = dist;
-            vecDiri(&activePlanet->a);
-            vecScale(&activePlanet->a, grav(solarSystem[i].mass, distMag));
-			}
+            vecScale(&dist, grav(solarSystem[i].mass, distMag)/distMag);
+            vecAddii(&solarSystem[active].a, dist);
+		}
 	}
 
-	// Update velocity
-	vecAddii(&activePlanet->v, activePlanet->a);
+    // averaging init and final acceleration
+    vecAddii(&accel, solarSystem[active].a);
+    vecScale(&accel, (long double) 0.5);
 
-	// Update positions
-	vecAddii(&activePlanet->p, activePlanet->v);
+    // Updating Velocity
+	vecAddii(&solarSystem[active].v, accel);
+
+    // averaging init and final velocity
+    vecAddii(&veloc, solarSystem[active].v);
+    vecScale(&veloc, (long double) 0.5);
+    
+    // updating position
+	vecAddii(&solarSystem[active].p, veloc);
 }
 
 
@@ -331,8 +341,30 @@ void readCSV(char filename[]) {
 void forkSoln() {
 	// Implemented post-beta. TODO
     
-}
+    int i;
+    pid_t pid = 0;
+    for (i = 0; i < 10; i++) {
+        printf("Starting body %d\n", i); 
+		fflush(stdout);
+        pid = fork();
+        if (pid == 0){
+            updater2(i);
+            exit(0);
+        }
+    } /*
 
+    
+    int i;
+	for (i = 0; i < totalSteps; i++) {
+		int j;
+        for (j = 0; j < 10; j++){
+           updatePlanet(j);
+        }
+	}
+    */
+    printf("Earth's location is %Lf%% off  \n", (expVal-solarSystem[3].p.x)/expVal * 100);
+}
+/*
 // Solution using POSIX threads
 void threadSoln() {
 
@@ -381,7 +413,7 @@ void updater(int* planet) {
 		updatePlanet(*planet);
 		i++;
 	}
-}
+}*/
 
 // Takes a planet and handles updates (on the solarSystem) for it while running
 void updater2(int planet) {
@@ -390,10 +422,10 @@ void updater2(int planet) {
 	while(i < totalSteps) {
 		// Sync on 0th tick and then every $syncStep after
 		if (i % syncStep == 0) {
+            pthread_barrier_wait(&syncBarrier);
 			fflush(stdout); 
 		}
 
-		fflush(stdout);
 		// Handle updating here to minimize conflicts where velocity/position changes halfway through reading it.
 		updatePlanet(planet);
 		i++;
