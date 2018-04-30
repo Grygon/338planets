@@ -501,6 +501,8 @@ void updater2(int planet) {
                 *syncPlanet = 0;
                 printf("Done i = %d: p = %d: t = %d\n", i, planet, *syncPlanet);
                 sem_post(sem);
+                sem_wait(sem);
+
                 printf("done\n");
             }
 		}
