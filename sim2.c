@@ -59,7 +59,7 @@ Planet planetInit() {
 }
 
 // Total number of steps to perform
-int totalSteps = 4; //2678400; // 1 month is 2678400. Currently results in huge error after 1 month of sim. I wonder if we need to take relativity into account. That'd be fun.
+int totalSteps = 2678400; // 1 month is 2678400. Currently results in huge error after 1 month of sim. I wonder if we need to take relativity into account. That'd be fun.
 
 long double expVal = -98567773.36025174;
 
@@ -468,22 +468,17 @@ void *updater(int* planet) {
             if(*syncPlanet < 9) {
                 
                 *syncPlanet += 1;
-                printf("Waiting i = %d: p = %d: t = %d\n", i, planet, *syncPlanet);
                 sem_post(sem2);
-                fflush(stdout);
                 sem_wait(sem);
                 *syncPlanet += 1;
                 sem_post(sem);
             }
             else {
                 *syncPlanet = 0;
-                printf("Done i = %d: p = %d: t = %d\n", i, planet, *syncPlanet);
-                fflush(stdout);
                 sem_post(sem);
                 while (*syncPlanet < 9) {}
                 *syncPlanet = 0;
                 sem_wait(sem);
-                printf("done\n");
 
                 sem_post(sem2);
             }
@@ -506,22 +501,17 @@ void updater2(int planet) {
             if(*syncPlanet < 9) {
                 
                 *syncPlanet += 1;
-                printf("Waiting i = %d: p = %d: t = %d\n", i, planet, *syncPlanet);
                 sem_post(sem2);
-                fflush(stdout);
                 sem_wait(sem);
                 *syncPlanet += 1;
                 sem_post(sem);
             }
             else {
                 *syncPlanet = 0;
-                printf("Done i = %d: p = %d: t = %d\n", i, planet, *syncPlanet);
-                fflush(stdout);
                 sem_post(sem);
                 while (*syncPlanet < 9) {}
                 *syncPlanet = 0;
                 sem_wait(sem);
-                printf("done\n");
 
                 sem_post(sem2);
             }
