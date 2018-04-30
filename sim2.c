@@ -200,7 +200,7 @@ void vecDiri(Vec *v){
 }
 
 long double vecMag(Vec v) {
-    return sqrtl(v.x * v.x + v.y * v.y + v.z * v.z);
+    return sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
 }
 
 long double grav(double m, long double r) {
