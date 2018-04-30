@@ -104,7 +104,10 @@ static sem_t *sem, *sem2;
 
 int main (int argc, char *argv[]) {
 
-	// Add in timing monitoring TODO
+
+	// Timers to time the two approaches
+	struct timeval start_time, stop_time, elapsed_time;
+
     Planet planets[10];
     solarSystem = &planets;
     solarSystem = mmap(NULL, sizeof *solarSystem, PROT_READ | PROT_WRITE, 
@@ -150,45 +153,53 @@ int main (int argc, char *argv[]) {
 		exit(0);
 	}
 
-    //syncBarrier = mmap(NULL, sizeof *syncBarrier, PROT_READ | PROT_WRITE,                   MAP_SHARED | MAP_ANONYMOUS, -1, 0);
-
 	// Read in starting data at given time
-	printf("Reading in data\n");
 	readCSV("startData.csv");
-	printf("Earth's location is: ");
-    printVec(solarSystem[3].p);
-	printf("Finished reading data\n");
-
-	// Create sync barrier
-//pthread_barrier_init(syncBarrier, NULL, 10);
-
-	// Save state TODO (hard to copy arrays in C)
-	// Planet startData[9] = solarSystem;
-
 
 	// Run one solution at a time to compare
 
+
+	gettimeofday(&start_time,NULL); // Start timer for fork
+	printf("(Running fork...)\n");
 	// Fork based solution
     forkSoln();
 
-	// Reset global storage of solarSystem TODO see above
-	// solarSystem = startData;
+    // Time for fork:
+	gettimeofday(&stop_time,NULL);
+	timersub(&stop_time, &start_time, &elapsed_time); // Unix time subtract routine
+	double forkRuntime = elapsed_time.tv_sec+elapsed_time.tv_usec/1000000.0;
 
-    printf("Reading in data\n");
+	// Store results of fork
+	Planet forkResults[10];
+	memcpy(&forkResults, &planets, sizeof(a));
+
+	// Read in starting data to start thread at same point
 	readCSV("startData.csv");
-	printf("Earth's location is: ");
-    printVec(solarSystem[3].p);
-	printf("Finished reading data\n");
+
+
+	gettimeofday(&start_time,NULL); // Start timer for thread
+	printf("(Running thread...)\n");
 
 	// Thread based solution
 	threadSoln();
 
-	// Test cases TODO
+    // Time for thread:
+	gettimeofday(&stop_time,NULL);
+	timersub(&stop_time, &start_time, &elapsed_time); // Unix time subtract routine
+	double threadRuntime = elapsed_time.tv_sec+elapsed_time.tv_usec/1000000.0;
 
 
+	printf("Forked simulation took %f seconds\n", forkRuntime);
+	printf("Threaded simulation took %f seconds\n", threadRuntime);
 
-	// Do various timing comparisons to get the "interesting" data for the project TODO
+	// Compare final states TODO		
+	int i;
+	double diff;
+	for (i = 0;i<=9;i++) {
+		diff = 0;
+	}
 
+	printf("The final states of the two simulations are %f%% different\n", diff);
 
 }
 
@@ -520,4 +531,9 @@ void updater2(int planet) {
 		updatePlanet(planet);
 	}
     
+}
+
+// When called, creates an image of the system at the current state.
+void createImage() {
+
 }
