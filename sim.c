@@ -86,7 +86,6 @@ long double grav(double m, long double r);
 void updatePlanet(int active);
 void readData(char filename[]);
 void *updater(int *planet);
-void updater2(int planet);
 void createImage(char* name);
 
 // Ensure all planets are on the same step every syncStep number of steps
@@ -105,6 +104,7 @@ static sem_t *sem, *sem2;
 
 // For CLI flags
 int numImages = 0;
+int imageStep = 0;
 
 int main (int argc, char *argv[]) {
 
@@ -132,8 +132,6 @@ int main (int argc, char *argv[]) {
 			return 0;
 		}
 	}
-
-
 
 	// Timers to time the two approaches
 	struct timeval start_time, stop_time, elapsed_time;
@@ -209,6 +207,15 @@ int main (int argc, char *argv[]) {
 
 	gettimeofday(&start_time,NULL); // Start timer for thread
 	printf("(Running thread...)\n");
+
+
+
+	// Figure out if we're doing image printing, and if so, which steps to do it on.
+	// Only do this after forked solution because we only need images in one solution, might as well make it thread solution.
+	if(numImages > 0) {
+		imageStep = totalSteps / numImages;
+	}
+
 
 	// Thread based solution
 	threadSoln();
@@ -421,8 +428,9 @@ void threadSoln() {
 // Takes a planet and handles updates (on the solarSystem) for it while running
 void *updater(int* planet) {
 
+	int imager = 0; // To ensure only one thread/fork creates an image
 	int i = 0;
-	while(i < totalSteps) {
+	while(i <= totalSteps) {
 		// Sync on 0th tick and then every $syncStep after
 		if (i % syncStep == 0) {
             sem_wait(sem2);
@@ -442,7 +450,16 @@ void *updater(int* planet) {
                 sem_wait(sem);
 
                 sem_post(sem2);
+                imager = 1;
             }
+		}
+
+		// In order: If proper thread to create image, and imageStep is defined, and we're on the right step, and not the first step. Then make an image
+		if ((imager > 0) && (imageStep > 0) && (i % imageStep == 0) && (i > 0)) {
+			char name[32]; // I think that's a fair name size
+			sprintf(name, "images/image_%d.bmp", i / imageStep);
+			createImage(name);
+			imager = 0;
 		}
 
 		// Handle updating here to minimize conflicts where velocity/position changes halfway through reading it.
@@ -471,8 +488,6 @@ void createImage(char* name) {
 		int x, y;
 		x = solarSystem[i].p.x / maxVal * size / 2 + size/2;
 		y = solarSystem[i].p.y / maxVal * size / 2 + size/2; 
-		printf("SS%d: %Lf\n", i, solarSystem[i].p.x / maxVal);
-		printf("x: %d, y: %d \n", x, y);
 		imageData[x][y] = 255;
 	}
 
