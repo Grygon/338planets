@@ -59,7 +59,7 @@ Planet planetInit() {
 }
 
 // Total number of steps to perform
-int totalSteps = 2; //2678400; // 1 month is 2678400. Currently results in huge error after 1 month of sim. I wonder if we need to take relativity into account. That'd be fun.
+int totalSteps = 4; //2678400; // 1 month is 2678400. Currently results in huge error after 1 month of sim. I wonder if we need to take relativity into account. That'd be fun.
 
 long double expVal = -98567773.36025174;
 
@@ -495,19 +495,13 @@ void updater2(int planet) {
                 printf("Waiting i = %d: p = %d: t = %d\n", i, planet, *syncPlanet);
                 sem_wait(sem);
 
-                sem_wait(sem2);
                 sem_post(sem);
-                sem_post(sem2);
             }
             else {
                 *syncPlanet = 0;
                 printf("Done i = %d: p = %d: t = %d\n", i, planet, *syncPlanet);
-                sem_wait(sem2);
                 sem_post(sem);
-                sem_post(sem2);
-
-                sem_wait(sem);
-                printf("done");
+                printf("done\n");
             }
 		}
 		// Handle updating here to minimize conflicts where velocity/position changes halfway through reading it.
