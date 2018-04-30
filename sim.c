@@ -23,6 +23,8 @@
 #include <sys/mman.h>
 #include <sys/shm.h>
 #include <fcntl.h>
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h" // Handy library for image writing. https://github.com/nothings/stb
 
 
 // Vector struct
@@ -59,7 +61,7 @@ Planet planetInit() {
 }
 
 // Total number of steps to perform
-int totalSteps = 2678400; // 1 month is 2678400. Currently results in huge error after 1 month of sim. I wonder if we need to take relativity into account. That'd be fun.
+int totalSteps = 267840; // 1 month is 2678400. Currently results in huge error after 1 month of sim. I wonder if we need to take relativity into account. That'd be fun.
 
 long double expVal = -98567773.36025174;
 
@@ -201,7 +203,7 @@ int main (int argc, char *argv[]) {
 	}
 
 	printf("The final states of the two simulations are %f%% different\n", diff);
-
+	createImage();
 }
 
 Vec newVec(int vx, int vy, int vz) {
@@ -464,7 +466,29 @@ void updater2(int planet) {
 // When called, creates an image of the system at the current state.
 void createImage() {
 	// Max distance pluto can be, which means scaling down by this factor will properly scale everything within bounds
-	long double maxVal = exp();
+	long double maxVal = 6 * pow(10, 9);
 
+	// Create a square image, with this many pixels per side
+	int size = 300;
 
+	// Just take solar system, don't need to differentiate between implementations at the given scale
+	unsigned char imageData[size][size];
+
+	// Zero array
+	memset(imageData, 0, size*size*sizeof(unsigned char));
+	
+	int i;
+	// Loop through solar system, changing the 10 required pixels
+	for (i = 0; i <= 9; ++i) {
+		int x, y;
+		x = solarSystem[i].p.x / maxVal * size / 2 + size/2;
+		y = solarSystem[i].p.y / maxVal * size / 2 + size/2; 
+		printf("SS%d: %Lf\n", i, solarSystem[i].p.x / maxVal);
+		printf("x: %d, y: %d \n", x, y);
+		imageData[x][y] = 255;
+	}
+
+	// Use a handy external library to write the data
+	if(stbi_write_bmp("testFile.bmp", size, size, 1, &imageData) == 0)
+		printf("Image writing failed\n");
 }
