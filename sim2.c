@@ -101,6 +101,7 @@ int syncStep = 1;
 static Planet *solarSystem;
 static int *syncPlanet;
 static sem_t *sem;
+static sem_t *sem2;
 
 int main (int argc, char *argv[]) {
 
@@ -130,6 +131,16 @@ int main (int argc, char *argv[]) {
 	}
 	// Set up semaphore
 	if(sem_init(sem, 1, 0) < 0) { // 1 = multiprocess
+		fprintf(stderr, "ERROR: could not initialize semaphore.\n");
+		exit(0);
+	}
+    sem2 = mmap(0,SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
+	if (sem2 == MAP_FAILED) {
+		printf("Map failed\n");
+		exit(0);
+	}
+	// Set up semaphore
+	if(sem_init(sem2, 1, 1) < 0) { // 1 = multiprocess
 		fprintf(stderr, "ERROR: could not initialize semaphore.\n");
 		exit(0);
 	}
@@ -477,12 +488,18 @@ void updater2(int planet) {
                 *syncPlanet += 1;
                 printf("Waiting i = %d: p = %d: t = %d\n", i, planet, *syncPlanet);
                 sem_wait(sem);
+
+                sem_wait(sem2);
                 sem_post(sem);
+                sem_post(sem2);
             }
             else {
-                printf("Done i = %d: p = %d: t = %d\n", i, planet, *syncPlanet);
                 *syncPlanet = 0;
+                printf("Done i = %d: p = %d: t = %d\n", i, planet, *syncPlanet);
+                sem_wait(sem2);
                 sem_post(sem);
+                sem_post(sem2);
+                
                 sem_wait(sem);
             }
 		}
