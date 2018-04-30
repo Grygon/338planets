@@ -369,7 +369,7 @@ void threadSoln() {
 
 
 // Takes a planet and handles updates (on the solarSystem) for it while running
-void * updater(int *planet) {
+void *updater(int *planet) {
     
 	int i = 0;
 	while(i < totalSteps) {
