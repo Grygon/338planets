@@ -122,16 +122,16 @@ int main (int argc, char *argv[]) {
 
 	// Reset global storage of solarSystem TODO see above
 	// solarSystem = startData;
-
+/*
     printf("Reading in data\n");
 	readCSV("startData.csv");
 	printf("Earth's location is: ");
     printVec(solarSystem[3].p);
 	printf("Finished reading data\n");
-    
+
 	// Thread based solution
 	threadSoln();
-
+*/
 	// Test cases TODO
 
 
@@ -345,7 +345,8 @@ void readCSV(char filename[]) {
 
 // Solution using fork
 void forkSoln() {
-	// Implemented post-beta. TODO
+	/*
+    // Implemented post-beta. TODO
     
     int i;
     pid_t pid = 0;
@@ -357,7 +358,7 @@ void forkSoln() {
             updater2(i);
             exit(0);
         }
-    } /*
+    } */
 
     
     int i;
@@ -367,10 +368,10 @@ void forkSoln() {
            updatePlanet(j);
         }
 	}
-    */
+    
     printf("Earth's location is %Lf%% off  \n", (expVal-solarSystem[3].p.x)/expVal * 100);
 }
-
+/*
 // Solution using POSIX threads
 void threadSoln() {
 
@@ -420,7 +421,7 @@ void updater(int* planet) {
 		i++;
 	}
 }
-
+*/
 // Takes a planet and handles updates (on the solarSystem) for it while running
 void updater2(int planet) {
     
