@@ -16,6 +16,7 @@
 #include <semaphore.h> 
 #include <sys/time.h>
 #include <stdlib.h>
+#include <tgmath.h>
 
 // Vector struct
 typedef struct Vecs {
