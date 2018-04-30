@@ -350,7 +350,7 @@ void threadSoln() {
 	for(i = 0; i <= 9;i++) {
 		printf("Starting body %d\n", i); 
 		fflush(stdout);
-		pthread_create(&tid[i], NULL, &updater, &planet[i]);
+		pthread_create(&tid[i], NULL, *updater, &planet[i]);
 	}	
 
 
