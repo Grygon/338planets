@@ -23,6 +23,9 @@
 #include <sys/mman.h>
 #include <sys/shm.h>
 #include <fcntl.h>
+#include <ctype.h>
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h" // Handy library for image writing. https://github.com/nothings/stb
 
 
 // Vector struct
@@ -83,12 +86,8 @@ long double grav(double m, long double r);
 void updatePlanet(int active);
 void readData(char filename[]);
 void *updater(int *planet);
-void updater2(int planet);
-void createImage();
+void createImage(char* name);
 
-// If "stepSize" is 1, then each step is 1 second. Scale as appropriate
-// Not currently implemented. TODO
-int stepSize = 1;
 // Ensure all planets are on the same step every syncStep number of steps
 int syncStep = 86400;
 
@@ -103,8 +102,37 @@ static Planet *solarSystem;
 static int *syncPlanet;
 static sem_t *sem, *sem2;
 
+// For CLI flags
+int numImages = 0;
+int imageStep = 0;
+
 int main (int argc, char *argv[]) {
 
+	// CLI flag handling
+	int i;
+
+	// Possible arguments
+	const char* possibleArgs[2] = {"--images", "--finalState"};
+
+	// Final result printing. If negative, doesn't print
+	int finalResult = -1;
+
+	for (i=1;i<argc;i++) {
+		if (strcmp(possibleArgs[0], argv[i]) == 0) { // Unfortunately can't swtich on a string
+			// Image flag case
+			numImages = atoi(argv[++i]);
+			printf("Please note that creating images means the threaded solution will take longer than the forked solution\n");
+		} else if (strcmp(possibleArgs[1], argv[i]) == 0) {
+			// For final state flag, check it's within bounds
+			if (atoi(argv[i+1]) < 10 && atoi(argv[i+1]) >= 0)
+				finalResult = atoi(argv[++i]);
+			else
+				printf("Final state flag requires number between 0 and 9\n");
+		} else {
+			printf("Unknown argument passed\n");
+			return 0;
+		}
+	}
 
 	// Timers to time the two approaches
 	struct timeval start_time, stop_time, elapsed_time;
@@ -124,7 +152,6 @@ int main (int argc, char *argv[]) {
 	const char *name = "planetSim1";
     const char *name2 = "planetSim2";
 
-	printf("Using shared memory named '%s'.\n\n", name);
 	int shm_fd, shm_fd2;
 
 	// Create shared memory for semaphore
@@ -172,7 +199,9 @@ int main (int argc, char *argv[]) {
 
 	// Store results of fork
 	Planet forkResults[10];
-	memcpy(&forkResults, &planets, sizeof(planets));
+	for(i = 0;i <= 9;i++) {
+		memcpy(&forkResults[i], &solarSystem[i], sizeof(solarSystem[i]));
+	}
 
 	// Read in starting data to start thread at same point
 	readData("startData.csv");
@@ -180,6 +209,15 @@ int main (int argc, char *argv[]) {
 
 	gettimeofday(&start_time,NULL); // Start timer for thread
 	printf("(Running thread...)\n");
+
+
+
+	// Figure out if we're doing image printing, and if so, which steps to do it on.
+	// Only do this after forked solution because we only need images in one solution, might as well make it thread solution.
+	if(numImages > 0) {
+		imageStep = totalSteps / numImages;
+	}
+
 
 	// Thread based solution
 	threadSoln();
@@ -194,14 +232,23 @@ int main (int argc, char *argv[]) {
 	printf("Threaded simulation took %f seconds\n", threadRuntime);
 
 	// Compare final states TODO		
-	int i;
-	double diff;
+	double diff = 0;
 	for (i = 0;i<=9;i++) {
-		diff = 0;
+		Vec offset = delta(solarSystem[i].p, forkResults[i].p);
+		diff += offset.x / solarSystem[i].p.x;
+		diff += offset.y / solarSystem[i].p.y;
+		diff += offset.z / solarSystem[i].p.z;
 	}
 
-	printf("The final states of the two simulations are %f%% different\n", diff);
+	if (diff / 30 < 0.00001)
+		printf("The final states of the two simulations are negligable\n");
+	else
+		printf("The final states of the two simulations are %.3f%% different\n", diff / 30);
 
+	if (finalResult > 0) {
+		printf("Final state of body %d:\n", finalResult);
+		printVec(solarSystem[finalResult].p);
+	}
 }
 
 Vec newVec(int vx, int vy, int vz) {
@@ -337,32 +384,19 @@ void readData(char filename[]) {
 
 // Solution using fork
 void forkSoln() {
-	
-    // Implemented post-beta. TODO
-    
+	   
     int i;
     pid_t pid = 0;
     for (i = 0; i < 10; i++) {
-        printf("Starting body %d\n", i); 
-		fflush(stdout);
         pid = fork();
         if (pid == 0){
-            updater2(i);
+            *updater(&i);
             exit(0);
         }
     } 
     for (i = 0; i < 10; i++){
         wait(NULL);
     }
-    /*
-    int i;
-	for (i = 0; i < totalSteps; i++) {
-		int j;
-        for (j = 0; j < 10; j++){
-           updatePlanet(j);
-        }
-	}
-    */
     printf("Earth's location is %Lf%% off  \n", (expVal-solarSystem[3].p.x)/expVal * 100);
 }
 
@@ -399,8 +433,10 @@ void threadSoln() {
 
 // Takes a planet and handles updates (on the solarSystem) for it while running
 void *updater(int* planet) {
+
+	int imager = 0; // To ensure only one thread/fork creates an image
 	int i = 0;
-	while(i < totalSteps) {
+	while(i <= totalSteps) {
 		// Sync on 0th tick and then every $syncStep after
 		if (i % syncStep == 0) {
             sem_wait(sem2);
@@ -420,7 +456,16 @@ void *updater(int* planet) {
                 sem_wait(sem);
 
                 sem_post(sem2);
+                imager = 1;
             }
+		}
+
+		// In order: If proper thread to create image, and imageStep is defined, and we're on the right step, and not the first step. Then make an image
+		if ((imager > 0) && (imageStep > 0) && (i % imageStep == 0) && (i > 0)) {
+			char name[32]; // I think that's a fair name size
+			sprintf(name, "images/image_%d.bmp", i / imageStep);
+			createImage(name);
+			imager = 0;
 		}
 
 		// Handle updating here to minimize conflicts where velocity/position changes halfway through reading it.
@@ -429,42 +474,30 @@ void *updater(int* planet) {
 	}
 }
 
-// Takes a planet and handles updates (on the solarSystem) for it while running
-void updater2(int planet) {
-    
-	int i;
-	for (i = 0; i < totalSteps; i ++) {
-		// Sync on 0th tick and then every $syncStep after
-		if (i % syncStep == 0) {
-            sem_wait(sem2);
-            if(*syncPlanet < 9) {
-                
-                *syncPlanet += 1;
-                sem_post(sem2);
-                sem_wait(sem);
-                *syncPlanet += 1;
-                sem_post(sem);
-            }
-            else {
-                *syncPlanet = 0;
-                sem_post(sem);
-                while (*syncPlanet < 9) {}
-                *syncPlanet = 0;
-                sem_wait(sem);
-
-                sem_post(sem2);
-            }
-		}
-		// Handle updating here to minimize conflicts where velocity/position changes halfway through reading it.
-		updatePlanet(planet);
-	}
-    
-}
-
 // When called, creates an image of the system at the current state.
-void createImage() {
+void createImage(char* name) {
 	// Max distance pluto can be, which means scaling down by this factor will properly scale everything within bounds
-	long double maxVal = exp();
+	long double maxVal = 6 * pow(10, 9);
 
+	// Create a square image, with this many pixels per side
+	int size = 300;
 
+	// Just take solar system, don't need to differentiate between implementations at the given scale
+	unsigned char imageData[size][size];
+
+	// Zero array
+	memset(imageData, 0, size*size*sizeof(unsigned char));
+	
+	int i;
+	// Loop through solar system, changing the 10 required pixels
+	for (i = 0; i <= 9; ++i) {
+		int x, y;
+		x = solarSystem[i].p.x / maxVal * size / 2 + size/2;
+		y = solarSystem[i].p.y / maxVal * size / 2 + size/2; 
+		imageData[x][y] = 255;
+	}
+
+	// Use a handy external library to write the data
+	if(stbi_write_bmp(name, size, size, 1, &imageData) == 0)
+		printf("Image writing failed\n");
 }
