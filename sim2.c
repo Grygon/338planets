@@ -152,7 +152,7 @@ int main (int argc, char *argv[]) {
 	}
 
     shm_fd3 = shm_open(name3, O_CREAT | O_RDWR, 0666);
-	ftruncate(shm_fd2,SIZE);
+	ftruncate(shm_fd3,SIZE);
     sem3 = mmap(0,SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd3, 0);
 	if (sem3 == MAP_FAILED) {
 		printf("Map failed\n");
