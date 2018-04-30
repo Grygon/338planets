@@ -81,7 +81,7 @@ void vecSubi(Vec *res, Vec v1, Vec v2);
 long double vecMag(Vec v);
 long double grav(double m, long double r);
 void updatePlanet(int active);
-void readCSV(char filename[]);
+void readData(char filename[]);
 void *updater(int *planet);
 void updater2(int planet);
 
@@ -154,7 +154,7 @@ int main (int argc, char *argv[]) {
 	}
 
 	// Read in starting data at given time
-	readCSV("startData.csv");
+	readData("startData.csv");
 
 	// Run one solution at a time to compare
 
@@ -174,7 +174,7 @@ int main (int argc, char *argv[]) {
 	memcpy(&forkResults, &planets, sizeof(a));
 
 	// Read in starting data to start thread at same point
-	readCSV("startData.csv");
+	readData("startData.csv");
 
 
 	gettimeofday(&start_time,NULL); // Start timer for thread
@@ -313,12 +313,11 @@ void updatePlanet(int active) {
 }
 
 
-// Adapted from http://c-for-dummies.com/blog/?p=2355
-// Reads the given file and places it in the solarSystem
+// Reads the given data and places it in the solarSystem
 // All data thanks to https://ssd.jpl.nasa.gov/horizons.cgi
-void readCSV(char filename[]) {
+void readData(char filename[]) {
 
-	// Temporary hardcoded implementation for the sake of the beta
+	// Unfortunately have to hardcode because implementing proper reading was extremely difficult (and outside the necessary scope of the project)
 	solarSystem[0] = (Planet){.p = (Vec){.x=-1.068000648301820 * pow(10,6),.y=-4.176802125684930 * pow(10,5),.z=3.084467020687090 * pow(10,4)},.v = (Vec){.x=9.305300847631915 * pow(10,-3),.y=-1.283176670344807 * pow(10,-2),.z=-1.631528028381386 * pow(10,-4)},.mass=1.988544*pow(10,30)};	
 	solarSystem[1] = (Planet){.p = (Vec){.x=-2.212062175862221 * pow(10,7),.y=-6.682431829610253 * pow(10,7),.z=-3.461601353176080 * pow(10,6)},.v = (Vec){.x=3.666229236478603 * pow(10,1),.y=-1.230266986781422 * pow(10,1),.z=-4.368336051784789 * pow(10,0)},.mass = 0.330103* pow(10,24)};
 	solarSystem[2] = (Planet){.p = (Vec){.x=-1.085735509178141 * pow(10,8),.y=-3.784200933160055 * pow(10,6),.z=6.190064472977990 * pow(10,6)},.v = (Vec){.x=8.984651054838754 * pow(10,-1),.y=-3.517203950794635 * pow(10,1),.z=-5.320225582712421 * pow(10,-1)},.mass = 4.13804 * pow(10,24)};
@@ -329,76 +328,6 @@ void readCSV(char filename[]) {
 	solarSystem[7] = (Planet){.p = (Vec){.x=2.157706702828831 * pow(10,9),.y=-2.055242911807622 * pow(10,9),.z=-3.559264256520975 * pow(10,7)},.v = (Vec){.x=4.646953712646178 * pow(10,0),.y=4.614361110490073 * pow(10,0),.z=-4.301340943493193 * pow(10,-2)},.mass = 86.8199 * pow(10,24)};
 	solarSystem[8] = (Planet){.p = (Vec){.x=2.513785419503203 * pow(10,9),.y=-3.739265092576820 * pow(10,9),.z=1.907031792232442 * pow(10,7)},.v = (Vec){.x=4.475105284920682 * pow(10,0),.y=3.062849397248741 * pow(10,0),.z=-1.667285646337855 * pow(10,-1)},.mass = 102.4311 * pow(10,24)};
 	solarSystem[9] = (Planet){.p = (Vec){.x=-1.478626340724678 * pow(10,9),.y=-4.182878118662979 * pow(10,9),.z=8.753002592760717 * pow(10,8)},.v = (Vec){.x=5.271230989790396 * pow(10,0),.y=-2.661751411789654 * pow(10,0),.z=-1.242036206632027 * pow(10,0)},.mass = 0.0146 * pow(10,24)};
-/*
-	int i = 0;
-
-	for (i = 0;i <= 9;i++) {
-		solarSystem[i].a = vecInit();
-	}
-
-	return;
-
-	// Post-beta implementation of CSV reading
-
-	int BSIZE = 80;
-	char buffer[BSIZE];
-	FILE *f;
-	char *field;
-
-	// open the CSV file 
-	f = fopen(filename,"r");
-	if( f == NULL)
-	{
-		printf("Unable to open file '%s'\n",filename);
-		exit(1);
-	}
-
-	// Index for read body
-	int i = 0;
-
-	// process the data 
-	// the file contains 8 fields 
-	// TODO implement parsing for exponents
-	printf("Reading initialized, accessing values\n");
-	fflush(stdout);
-	while(fgets(buffer,BSIZE,f))
-	{
-		// Skip name
-		field=strtok(buffer,",");
-		// get x position 
-		field=strtok(NULL,",");
-		printf(field);
-		fflush(stdout);
-		solarSystem[i].p.x=atoi(field); // Seg fault here. Field is X(km)-1.068000648301820E+06. 
-		// Why does it include 1st and 2nd rows? That's problem a, problem b is parsing
-		// get y position 
-		field=strtok(NULL,",");
-		solarSystem[i].p.y=atoi(field);
-		// get z position 
-		field=strtok(NULL,",");
-		solarSystem[i].p.z=atoi(field);
-		// get x vel 
-		field=strtok(NULL,",");
-		solarSystem[i].v.x=atoi(field);
-		// get y vel 
-		field=strtok(NULL,",");
-		solarSystem[i].v.y=atoi(field);
-		// get z vel 
-		field=strtok(NULL,",");
-		solarSystem[i].v.z=atoi(field);
-		// get mass 
-		field=strtok(NULL,",");
-		solarSystem[i].mass=atoi(field);
-
-		i++;
-	}
-	printf("Reading finished");
-	fflush(stdout);
-
-	// close file 
-	fclose(f);
-*/
-
 }
 
 
