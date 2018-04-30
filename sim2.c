@@ -122,7 +122,7 @@ int main (int argc, char *argv[]) {
     const char *name3 = "ChrisFietkiewicz3";
 
 	printf("Using shared memory named '%s'.\n\n", name);
-	int shm_fd, shm_fd2;
+	int shm_fd, shm_fd2, shm_fd3;
 
 	// Create shared memory for semaphore
 	shm_fd = shm_open(name, O_CREAT | O_RDWR, 0666);
