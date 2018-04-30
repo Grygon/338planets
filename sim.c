@@ -84,6 +84,7 @@ void updatePlanet(int active);
 void readData(char filename[]);
 void *updater(int *planet);
 void updater2(int planet);
+void createImage();
 
 // If "stepSize" is 1, then each step is 1 second. Scale as appropriate
 // Not currently implemented. TODO
@@ -120,8 +121,8 @@ int main (int argc, char *argv[]) {
     *syncPlanet = 0;
 
     const int SIZE = 1;
-	const char *name = "ChrisFietkiewicz";
-    const char *name2 = "ChrisFietkiewicz2";
+	const char *name = "planetSim1";
+    const char *name2 = "planetSim2";
 
 	printf("Using shared memory named '%s'.\n\n", name);
 	int shm_fd, shm_fd2;
@@ -171,7 +172,7 @@ int main (int argc, char *argv[]) {
 
 	// Store results of fork
 	Planet forkResults[10];
-	memcpy(&forkResults, &planets, sizeof(a));
+	memcpy(&forkResults, &planets, sizeof(planets));
 
 	// Read in starting data to start thread at same point
 	readData("startData.csv");
@@ -380,7 +381,6 @@ void threadSoln() {
 	// Prepare the child threads
 	pthread_t tid[10]; // the thread identifiers 
 	for(i = 0; i <= 9;i++) {
-		printf("Starting body %d\n", i); 
 		fflush(stdout);
 		pthread_create(&tid[i], NULL, updater, &planet[i]);
 	}	
@@ -389,7 +389,6 @@ void threadSoln() {
 	// Wait for threads to terminate
 	for(i = 0; i <= 9;i++) {
 		pthread_join(tid[i], NULL);	
-		printf("Terminating body %d\n", i);
 	}
 
 	// Print a result:
@@ -464,5 +463,8 @@ void updater2(int planet) {
 
 // When called, creates an image of the system at the current state.
 void createImage() {
+	// Max distance pluto can be, which means scaling down by this factor will properly scale everything within bounds
+	long double maxVal = exp();
+
 
 }
