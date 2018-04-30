@@ -74,7 +74,7 @@ long double vecMag(Vec v);
 long double grav(double m, long double r);
 void updatePlanet(int active);
 void readCSV(char filename[]);
-void * updater(int *planet);
+void *updater(int planet);
 
 
 // If "stepSize" is 1, then each step is 1 second. Scale as appropriate
@@ -351,7 +351,7 @@ void threadSoln() {
 	for(i = 0; i <= 9;i++) {
 		printf("Starting body %d\n", i); 
 		fflush(stdout);
-		pthread_create(&tid[i], NULL, updater, &planet[i]);
+		pthread_create(&tid[i], NULL, updater, planet[i]);
 	}	
 
 
@@ -369,7 +369,7 @@ void threadSoln() {
 
 
 // Takes a planet and handles updates (on the solarSystem) for it while running
-void *updater(int *planet) {
+void *updater(int planet) {
     
 	int i = 0;
 	while(i < totalSteps) {
@@ -381,7 +381,7 @@ void *updater(int *planet) {
 
 		fflush(stdout);
 		// Handle updating here to minimize conflicts where velocity/position changes halfway through reading it.
-		updatePlanet(*planet);
+		updatePlanet(planet);
 		i++;
 	}
     
