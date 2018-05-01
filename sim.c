@@ -64,7 +64,7 @@ Planet planetInit() {
 // Total number of steps to perform
 int totalSteps = 2678400; // 1 month is 2678400. Currently results in huge error after 1 month of sim. I wonder if we need to take relativity into account. That'd be fun.
 
-long double expVal = -98567773.36025174;
+// long double expVal = -98567773.36025174;
 
 // Create pointers to functions
 void forkSoln();
@@ -89,11 +89,7 @@ void *updater(int *planet);
 void createImage(char* name);
 
 // Ensure all planets are on the same step every syncStep number of steps
-int syncStep = 86400;
-
-// Using a "brand new" thing I found, sync barriers!
-// While these weren't covered in class, they fill our need perfectly.
-//static pthread_barrier_t *syncBarrier;
+int syncStep = 86400; // Currently set to every day, testing found this to be quite accurate, while barely affecting performance.
 
 // Storage for solar system
 // 0 is sun, 1 is mercury, etc
@@ -397,7 +393,7 @@ void forkSoln() {
     for (i = 0; i < 10; i++){
         wait(NULL);
     }
-    printf("Earth's location is %Lf%% off  \n", (expVal-solarSystem[3].p.x)/expVal * 100);
+    // printf("Earth's location is %Lf%% off  \n", (expVal-solarSystem[3].p.x)/expVal * 100);
 }
 
 // Solution using POSIX threads
@@ -425,8 +421,7 @@ void threadSoln() {
 		pthread_join(tid[i], NULL);	
 	}
 
-	// Print a result:
-    printf("Earth's location is %Lf%% off  \n", (expVal-solarSystem[3].p.x)/expVal * 100);
+    // printf("Earth's location is %Lf%% off  \n", (expVal-solarSystem[3].p.x)/expVal * 100);
 	// Expected result after 1mo is -9.856777336025174E+07
 
 }
