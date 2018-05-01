@@ -241,7 +241,7 @@ int main (int argc, char *argv[]) {
 	}
 
 	if (diff / 30 < 0.00001)
-		printf("The final states of the two simulations are negligably different\n");
+		printf("The final states of the two simulations are negligibly different\n");
 	else
 		printf("The final states of the two simulations are %.3f%% different\n", diff / 30);
 
