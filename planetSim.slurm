@@ -14,6 +14,6 @@ mkdir images
 
 mkdir -p ../planetSimResults
 
-cp -ru ./images $SLURM_SUBMIT_DIR/images
+cp -ru ./images $SLURM_SUBMIT_DIR
 
-./sim --threads 31557600 --finalState 3
+./sim --ticks 31557600 --finalState 3
