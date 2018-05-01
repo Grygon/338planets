@@ -108,7 +108,7 @@ int main (int argc, char *argv[]) {
 	int i;
 
 	// Possible arguments
-	const char* possibleArgs[2] = {"--images", "--finalState"};
+	const char* possibleArgs[3] = {"--images", "--finalState", "--ticks"};
 
 	// Final result printing. If negative, doesn't print
 	int finalResult = -1;
@@ -124,6 +124,10 @@ int main (int argc, char *argv[]) {
 				finalResult = atoi(argv[++i]);
 			else
 				printf("Final state flag requires number between 0 and 9\n");
+		} else if (strcmp(possibleArgs[2], argv[i]) == 0) {
+			// Custom number of ticks
+			totalSteps = atoi(argv[++i]);
+			printf("Running with %d steps!\n", totalSteps);
 		} else {
 			printf("Unknown argument passed\n");
 			return 0;
@@ -237,7 +241,7 @@ int main (int argc, char *argv[]) {
 	}
 
 	if (diff / 30 < 0.00001)
-		printf("The final states of the two simulations are negligable\n");
+		printf("The final states of the two simulations are negligably different\n");
 	else
 		printf("The final states of the two simulations are %.3f%% different\n", diff / 30);
 
