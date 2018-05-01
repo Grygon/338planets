@@ -9,6 +9,11 @@ cp * $PFSDIR/.
 cd $PFSDIR
 make
 ./sim
-cp ./output ../planetSimOutput/
+mkdir images
+./sim --images 10
 
-./sim
+mkdir -p ../planetSimResults
+
+cp -ru ./images $SLURM_SUBMIT_DIR/images
+
+./sim --threads 31557600 --finalState 3
